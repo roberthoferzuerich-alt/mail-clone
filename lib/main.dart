@@ -946,7 +946,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.format_bold, color: Colors.black54),
+                      icon: const Icon(
+                        Icons.format_bold,
+                        color: Colors.black54,
+                      ),
                       onPressed: () => _insertMarkdown('**', '**'),
                       tooltip: 'Fett',
                     ),
@@ -976,6 +979,13 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       onPressed: () => _insertMarkdown('[', '](url)'),
                       tooltip: 'Link',
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.table_chart_outlined, color: Colors.black54),
+                      onPressed: () => _insertMarkdown(
+                        '\n| Kopf 1 | Kopf 2 | Kopf 3 |\n| :--- | :--- | :--- |\n| Wert 1 | Wert 2 | Wert 3 |\n| Wert 4 | Wert 5 | Wert 6 |\n',
+                      ),
+                      tooltip: 'Tabelle',
+                    ),
                   ],
                 ),
               ),
@@ -1003,7 +1013,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       child: TextFormField(
                         controller: _bodyController,
                         decoration: const InputDecoration(
-                          hintText: 'Nachricht schreiben (Markdown unterstützt)',
+                          hintText:
+                              'Nachricht schreiben (Markdown unterstützt)',
                           border: InputBorder.none,
                         ),
                         maxLines: null,
