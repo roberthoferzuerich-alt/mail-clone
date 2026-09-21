@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 void main() {
   runApp(const MainApp());
@@ -745,9 +746,11 @@ class EmailDetailScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 32),
-            Text(
-              email['body'],
-              style: const TextStyle(fontSize: 16, height: 1.5),
+            MarkdownBody(
+              data: email['body'],
+              styleSheet: MarkdownStyleSheet(
+                p: const TextStyle(fontSize: 16, height: 1.5),
+              ),
             ),
           ],
         ),
@@ -783,6 +786,28 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   final _bodyController = TextEditingController();
 
   bool isSending = false;
+
+  void _insertMarkdown(String prefix, [String suffix = '']) {
+    final text = _bodyController.text;
+    final selection = _bodyController.selection;
+    
+    if (selection.isValid && selection.start >= 0 && selection.end >= 0) {
+      final selectedText = text.substring(selection.start, selection.end);
+      final newText = text.replaceRange(selection.start, selection.end, '$prefix$selectedText$suffix');
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(
+          offset: selection.start + prefix.length + selectedText.length + suffix.length,
+        ),
+      );
+    } else {
+      final newText = text + prefix + suffix;
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newText.length - suffix.length),
+      );
+    }
+  }
 
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
@@ -883,13 +908,47 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
               ),
             ),
             const Divider(height: 1),
+            Container(
+              color: Colors.grey.shade100,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.format_bold, color: Colors.black54),
+                    onPressed: () => _insertMarkdown('**', '**'),
+                    tooltip: 'Fett',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_italic, color: Colors.black54),
+                    onPressed: () => _insertMarkdown('*', '*'),
+                    tooltip: 'Kursiv',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_list_bulleted, color: Colors.black54),
+                    onPressed: () => _insertMarkdown('- '),
+                    tooltip: 'Liste',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.code, color: Colors.black54),
+                    onPressed: () => _insertMarkdown('`', '`'),
+                    tooltip: 'Code',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.link, color: Colors.black54),
+                    onPressed: () => _insertMarkdown('[', '](url)'),
+                    tooltip: 'Link',
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextFormField(
                   controller: _bodyController,
                   decoration: const InputDecoration(
-                    hintText: 'Nachricht schreiben',
+                    hintText: 'Nachricht schreiben (Markdown unterstützt)',
                     border: InputBorder.none,
                   ),
                   maxLines: null,
