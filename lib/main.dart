@@ -242,21 +242,30 @@ class _EmailListScreenState extends State<EmailListScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: TextField(
-          controller: _searchController,
-          style: const TextStyle(color: Colors.white),
-          cursorColor: Colors.white,
-          decoration: InputDecoration(
-            hintText: 'Suchen in ${currentFolder.toUpperCase()}...',
-            hintStyle: const TextStyle(color: Colors.white70),
-            border: InputBorder.none,
+        title: Container(
+          height: 38,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[800] : Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
           ),
-          onSubmitted: (value) {
-            setState(() {
-              searchQuery = value;
-            });
-            fetchEmails();
-          },
+          child: TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white),
+            cursorColor: Colors.white,
+            decoration: InputDecoration(
+              hintText: 'Suchen in ${currentFolder.toUpperCase()}...',
+              hintStyle: const TextStyle(color: Colors.white70),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              isDense: true,
+            ),
+            onSubmitted: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+              fetchEmails();
+            },
+          ),
         ),
         actions: [
           if (searchQuery.isNotEmpty)
