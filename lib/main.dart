@@ -205,6 +205,31 @@ class _EmailListScreenState extends State<EmailListScreen> {
     }
   }
 
+  Future<void> _archiveEmail(int id, int index) async {
+    final archivedEmail = emails[index];
+    setState(() {
+      emails.removeAt(index);
+    });
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$apiUrl/emails/$id/move'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true'
+        },
+        body: json.encode({'folder': 'archive'}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+    } catch (e) {
+      setState(() {
+        emails.insert(index, archivedEmail);
+      });
+    }
+  }
+
   Future<void> _markAsRead(int id, int index) async {
     if (emails[index]['isRead'] == true) return;
 
@@ -256,7 +281,10 @@ class _EmailListScreenState extends State<EmailListScreen> {
               hintText: 'Suchen in ${currentFolder.toUpperCase()}...',
               hintStyle: const TextStyle(color: Colors.white70),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               isDense: true,
             ),
             onSubmitted: (value) {
@@ -403,8 +431,17 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
                         return Dismissible(
                           key: Key(email['id'].toString()),
-                          direction: DismissDirection.endToStart,
+                          direction: DismissDirection.horizontal,
                           background: Container(
+                            color: Colors.green,
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.only(left: 20),
+                            child: const Icon(
+                              Icons.archive,
+                              color: Colors.white,
+                            ),
+                          ),
+                          secondaryBackground: Container(
                             color: Colors.red,
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
@@ -414,7 +451,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
                             ),
                           ),
                           onDismissed: (direction) {
-                            _deleteEmail(email['id'], index - 1);
+                            if (direction == DismissDirection.startToEnd) {
+                              _archiveEmail(email['id'], index - 1);
+                            } else if (direction == DismissDirection.endToStart) {
+                              _deleteEmail(email['id'], index - 1);
+                            }
                           },
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(
