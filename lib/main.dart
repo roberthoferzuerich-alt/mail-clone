@@ -245,6 +245,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
         title: TextField(
           controller: _searchController,
           style: const TextStyle(color: Colors.white),
+          cursorColor: Colors.white,
           decoration: InputDecoration(
             hintText: 'Suchen in ${currentFolder.toUpperCase()}...',
             hintStyle: const TextStyle(color: Colors.white70),
