@@ -4,11 +4,13 @@ import '../screens/settings_screen.dart';
 
 class MailDrawer extends StatelessWidget {
   final String currentFolder;
+  final Map<String, int> unreadCounts;
   final Function(String) onFolderSelected;
 
   const MailDrawer({
     super.key,
     required this.currentFolder,
+    required this.unreadCounts,
     required this.onFolderSelected,
   });
 
@@ -90,27 +92,23 @@ class MailDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _buildDrawerItem(context, Icons.inbox, 'Posteingang', 'inbox', '4'),
+                  _buildDrawerItem(context, Icons.inbox, 'Posteingang', 'inbox'),
                   _buildDrawerItem(context, Icons.edit_outlined,
                     'Entwürfe',
                     'drafts',
-                    '24',
                   ),
                   _buildDrawerItem(context, Icons.inventory_2_outlined,
                     'Archiv',
                     'archive',
-                    '',
                   ),
-                  _buildDrawerItem(context, Icons.send_outlined, 'Gesendet', 'sent', ''),
+                  _buildDrawerItem(context, Icons.send_outlined, 'Gesendet', 'sent'),
                   _buildDrawerItem(context, Icons.delete_outline,
                     'Gelöscht',
                     'trash',
-                    '354',
                   ),
                   _buildDrawerItem(context, Icons.folder_off_outlined,
                     'Junk-E-Mail',
                     'junk',
-                    '',
                   ),
                 ],
               ),
@@ -126,9 +124,10 @@ class MailDrawer extends StatelessWidget {
     IconData icon,
     String title,
     String folder,
-    String badge,
   ) {
     final isSelected = currentFolder == folder;
+    final count = unreadCounts[folder] ?? 0;
+    final badge = count > 0 ? count.toString() : '';
     return ListTile(
       leading: Icon(icon, color: isSelected ? outlookBlue : Colors.grey),
       title: Text(

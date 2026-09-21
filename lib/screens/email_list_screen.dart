@@ -20,12 +20,32 @@ class _EmailListScreenState extends State<EmailListScreen> {
   String searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
+  Map<String, int> unreadCounts = {};
+  
   final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
 
   @override
   void initState() {
     super.initState();
     fetchEmails();
+    fetchFolderCounts();
+  }
+
+  Future<void> fetchFolderCounts() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/emails/counts'),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        setState(() {
+          unreadCounts = data.map((key, value) => MapEntry(key, value as int));
+        });
+      }
+    } catch (e) {
+      // Ignore for now
+    }
   }
 
   Future<void> fetchEmails() async {
@@ -79,6 +99,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
       if (response.statusCode == 200) {
+        fetchFolderCounts();
         if (mounted) {
           ScaffoldMessenger.of(
             context,
@@ -113,6 +134,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
       if (response.statusCode != 200) {
         throw Exception();
       } else {
+        fetchFolderCounts();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('E-Mail ins Archiv verschoben!')),
@@ -143,6 +165,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
         Uri.parse('$apiUrl/emails/$id/read'),
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
+      fetchFolderCounts();
     } catch (e) {
       // ignore
     }
@@ -221,6 +244,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
       ),
       drawer: MailDrawer(
         currentFolder: currentFolder,
+        unreadCounts: unreadCounts,
         onFolderSelected: (folder) {
           setState(() {
             currentFolder = folder;
