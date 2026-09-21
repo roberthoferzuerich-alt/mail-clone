@@ -132,3 +132,4 @@ import '../main.dart';
 
 if __name__ == '__main__':
     main()
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../main.dart';
+import 'compose_email_screen.dart';
 
 class EmailDetailScreen extends StatelessWidget {
   final Map<String, dynamic> email;
@@ -104,6 +105,87 @@ class EmailDetailScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.white12 : Colors.black12,
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildActionButton(
+                  context,
+                  Icons.reply,
+                  'Antworten',
+                  () => _handleReply(context, email, forward: false),
+                ),
+                _buildActionButton(
+                  context,
+                  Icons.reply_all,
+                  'Allen antworten',
+                  () => _handleReply(context, email, forward: false), // simplified
+                ),
+                _buildActionButton(
+                  context,
+                  Icons.forward,
+                  'Weiterleiten',
+                  () => _handleReply(context, email, forward: true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: outlookBlue),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(color: outlookBlue, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleReply(BuildContext context, Map<String, dynamic> email, {required bool forward}) {
+    final sender = email['sender'];
+    final originalSubject = email['subject'];
+    final subject = forward
+        ? 'Fwd: $originalSubject'
+        : (originalSubject.startsWith('Re:') ? originalSubject : 'Re: $originalSubject');
+
+    final date = _formatDateTime(email['date']);
+    final quotedBody = '\n\n\n--- Ursprüngliche Nachricht ---\nVon: $sender\nDatum: $date\nBetreff: $originalSubject\n\n> ' + 
+        email['body'].toString().replaceAll('\n', '\n> ');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComposeEmailScreen(
+          initialTo: forward ? '' : sender,
+          initialSubject: subject,
+          initialBody: quotedBody,
         ),
       ),
     );

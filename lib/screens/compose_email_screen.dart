@@ -6,7 +6,16 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../main.dart';
 
 class ComposeEmailScreen extends StatefulWidget {
-  const ComposeEmailScreen({super.key});
+  final String? initialTo;
+  final String? initialSubject;
+  final String? initialBody;
+
+  const ComposeEmailScreen({
+    super.key,
+    this.initialTo,
+    this.initialSubject,
+    this.initialBody,
+  });
 
   @override
   State<ComposeEmailScreen> createState() => _ComposeEmailScreenState();
@@ -17,6 +26,14 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   final _toController = TextEditingController();
   final _subjectController = TextEditingController();
   final _bodyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTo != null) _toController.text = widget.initialTo!;
+    if (widget.initialSubject != null) _subjectController.text = widget.initialSubject!;
+    if (widget.initialBody != null) _bodyController.text = widget.initialBody!;
+  }
 
   bool isSending = false;
   bool isPreviewMode = false;
