@@ -111,9 +111,7 @@ class EmailDetailScreen extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(
-                color: isDark ? Colors.white12 : Colors.black12,
-              ),
+              top: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
             ),
           ),
           child: Padding(
@@ -131,7 +129,11 @@ class EmailDetailScreen extends StatelessWidget {
                   context,
                   Icons.reply_all,
                   'Allen antworten',
-                  () => _handleReply(context, email, forward: false), // simplified
+                  () => _handleReply(
+                    context,
+                    email,
+                    forward: false,
+                  ), // simplified
                 ),
                 _buildActionButton(
                   context,
@@ -147,7 +149,12 @@ class EmailDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+  ) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
@@ -168,15 +175,22 @@ class EmailDetailScreen extends StatelessWidget {
     );
   }
 
-  void _handleReply(BuildContext context, Map<String, dynamic> email, {required bool forward}) {
+  void _handleReply(
+    BuildContext context,
+    Map<String, dynamic> email, {
+    required bool forward,
+  }) {
     final sender = email['sender'];
     final originalSubject = email['subject'];
     final subject = forward
-        ? 'Fwd: $originalSubject'
-        : (originalSubject.startsWith('Re:') ? originalSubject : 'Re: $originalSubject');
+        ? 'WG: $originalSubject'
+        : (originalSubject.startsWith('AW:')
+              ? originalSubject
+              : 'AW: $originalSubject');
 
     final date = _formatDateTime(email['date']);
-    final quotedBody = '\n\n\n--- Ursprüngliche Nachricht ---\nVon: $sender\nDatum: $date\nBetreff: $originalSubject\n\n> ' + 
+    final quotedBody =
+        '\n\n\n--- Ursprüngliche Nachricht ---\nVon: $sender\nDatum: $date\nBetreff: $originalSubject\n\n> ' +
         email['body'].toString().replaceAll('\n', '\n> ');
 
     Navigator.push(

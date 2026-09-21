@@ -31,7 +31,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   void initState() {
     super.initState();
     if (widget.initialTo != null) _toController.text = widget.initialTo!;
-    if (widget.initialSubject != null) _subjectController.text = widget.initialSubject!;
+    if (widget.initialSubject != null)
+      _subjectController.text = widget.initialSubject!;
     if (widget.initialBody != null) _bodyController.text = widget.initialBody!;
   }
 
