@@ -48,7 +48,9 @@ class MainApp extends StatelessWidget {
             future: AuthService().isLoggedIn(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
               }
               if (snapshot.data == true) {
                 return const MainScreen();
@@ -61,5 +63,3 @@ class MainApp extends StatelessWidget {
     );
   }
 }
-
-

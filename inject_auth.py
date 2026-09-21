@@ -60,3 +60,4 @@ def add_token_compose(filepath):
 
 add_token_compose('lib/screens/compose_email_screen.dart')
 print("Injected auth tokens")
+

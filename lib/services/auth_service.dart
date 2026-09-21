@@ -15,10 +15,7 @@ class AuthService {
           'Accept': 'application/json',
           'Bypass-Tunnel-Reminder': 'true',
         },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {

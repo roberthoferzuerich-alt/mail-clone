@@ -14,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController(text: 'password');
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _errorMessage;
 
   Future<void> _login() async {
@@ -52,7 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.email_outlined, size: 80, color: Color(0xFF0078D4)),
+                const Icon(
+                  Icons.email_outlined,
+                  size: 80,
+                  color: Color(0xFF0078D4),
+                ),
                 const SizedBox(height: 24),
                 const Text(
                   'Willkommen bei Mail',
@@ -86,12 +91,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Passwort',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -108,7 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Anmelden', style: TextStyle(fontSize: 18)),
+                        : const Text(
+                            'Anmelden',
+                            style: TextStyle(fontSize: 18),
+                          ),
                   ),
                 ),
               ],
