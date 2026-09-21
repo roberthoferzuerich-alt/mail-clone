@@ -2,34 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http_parser/http_parser.dart';
 
 void main() {
   runApp(const MainApp());
 }
 
 const Color outlookBlue = Color(0xFF0078D4);
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Mail Clone',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: outlookBlue,
-          primary: outlookBlue,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: outlookBlue,
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Mail Clone',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: outlookBlue,
+              primary: outlookBlue,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: outlookBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: outlookBlue,
+              primary: outlookBlue,
+              brightness: Brightness.dark,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.black87,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode: currentMode,
+          home: const MainScreen(),
+        );
+      },
     );
   }
 }
@@ -115,8 +137,11 @@ class EmailListScreen extends StatefulWidget {
 class _EmailListScreenState extends State<EmailListScreen> {
   List<dynamic> emails = [];
   bool isLoading = true;
+  String currentFolder = 'inbox';
+  String searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
-  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api/emails';
+  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
 
   @override
   void initState() {
@@ -130,7 +155,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse(apiUrl),
+        Uri.parse('$apiUrl/emails?folder=$currentFolder&search=$searchQuery'),
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
       if (response.statusCode == 200) {
@@ -148,6 +173,19 @@ class _EmailListScreenState extends State<EmailListScreen> {
     }
   }
 
+  Future<void> _refreshEmails() async {
+    // Wenn wir in "inbox" sind, synce auch IMAP
+    if (currentFolder == 'inbox') {
+      try {
+        await http.get(
+          Uri.parse('$apiUrl/imap/sync'),
+          headers: {'Bypass-Tunnel-Reminder': 'true'},
+        ).timeout(const Duration(seconds: 15));
+      } catch (_) {}
+    }
+    await fetchEmails();
+  }
+
   Future<void> _deleteEmail(int id, int index) async {
     final deletedEmail = emails[index];
     setState(() {
@@ -156,7 +194,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
     try {
       await http.delete(
-        Uri.parse('$apiUrl/$id'),
+        Uri.parse('$apiUrl/emails/$id'),
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
     } catch (e) {
@@ -175,7 +213,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
     try {
       await http.patch(
-        Uri.parse('$apiUrl/$id/read'),
+        Uri.parse('$apiUrl/emails/$id/read'),
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
     } catch (e) {
@@ -185,36 +223,75 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topBarColor = isDark ? Colors.black87 : outlookBlue;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.home, color: outlookBlue),
+            icon: CircleAvatar(
+              backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+              child: Icon(Icons.home, color: isDark ? Colors.white : outlookBlue),
             ),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Posteingang',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: TextField(
+          controller: _searchController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Suchen in ${currentFolder.toUpperCase()}...',
+            hintStyle: const TextStyle(color: Colors.white70),
+            border: InputBorder.none,
+          ),
+          onSubmitted: (value) {
+            setState(() {
+              searchQuery = value;
+            });
+            fetchEmails();
+          },
         ),
         actions: [
+          if (searchQuery.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  searchQuery = '';
+                });
+                fetchEmails();
+              },
+            ),
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                searchQuery = _searchController.text;
+              });
+              fetchEmails();
+            },
           ),
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
         ],
       ),
-      drawer: const MailDrawer(),
+      drawer: MailDrawer(
+        currentFolder: currentFolder,
+        onFolderSelected: (folder) {
+          setState(() {
+            currentFolder = folder;
+            searchQuery = '';
+            _searchController.clear();
+          });
+          fetchEmails();
+        },
+      ),
       body: Column(
         children: [
           // Filter / Tabs Row
           Container(
-            color: outlookBlue,
+            color: topBarColor,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,52 +299,31 @@ class _EmailListScreenState extends State<EmailListScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? Colors.grey[800] : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'Relevant',
-                        style: TextStyle(
-                          color: outlookBlue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text('Relevant', style: TextStyle(color: isDark ? Colors.white : outlookBlue, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'Sonstige',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: const Text('Sonstige', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Filter',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: const Text('Filter', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -276,7 +332,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
           // E-Mail Liste
           Expanded(
             child: RefreshIndicator(
-              onRefresh: fetchEmails,
+              onRefresh: _refreshEmails,
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : emails.isEmpty
@@ -431,54 +487,55 @@ class _EmailListScreenState extends State<EmailListScreen> {
 // Drawer (Seitenmenü)
 // ----------------------------------------------------------------------
 class MailDrawer extends StatelessWidget {
-  const MailDrawer({super.key});
+  final String currentFolder;
+  final Function(String) onFolderSelected;
+
+  const MailDrawer({
+    super.key,
+    required this.currentFolder,
+    required this.onFolderSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Drawer(
       child: Row(
         children: [
           // Schmale linke Leiste
           Material(
-            color: Colors.grey.shade100,
+            color: isDark ? Colors.black54 : Colors.grey.shade100,
             child: SizedBox(
               width: 70,
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  const CircleAvatar(
-                    backgroundColor: Colors.white,
+                  CircleAvatar(
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
                     radius: 24,
-                    child: Icon(Icons.home, color: outlookBlue, size: 28),
+                    child: Icon(Icons.home, color: isDark ? Colors.white : outlookBlue, size: 28),
                   ),
                   const SizedBox(height: 16),
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.orange.shade300,
-                    child: const Text(
-                      'RH',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: const Text('RH', style: TextStyle(color: Colors.white)),
                   ),
                   const SizedBox(height: 16),
-                  const Icon(Icons.email_outlined, color: Colors.black54),
+                  const Icon(Icons.email_outlined, color: Colors.grey),
                   const SizedBox(height: 16),
-                  const Icon(Icons.add, color: Colors.black54),
+                  const Icon(Icons.add, color: Colors.grey),
                   const Spacer(),
-                  const Icon(Icons.help_outline, color: Colors.black54),
+                  const Icon(Icons.help_outline, color: Colors.grey),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.black54,
-                    ),
+                    icon: const Icon(Icons.settings_outlined, color: Colors.grey),
                     onPressed: () {
-                      Navigator.pop(context); // Schließe Drawer
+                      Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
                       );
                     },
                   ),
@@ -490,50 +547,21 @@ class MailDrawer extends StatelessWidget {
           // Breiter rechter Bereich
           Expanded(
             child: Material(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
                   const SizedBox(height: 40),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16, bottom: 16),
-                    child: Text(
-                      'Alle Konten',
-                      style: TextStyle(fontSize: 18, color: Colors.black87),
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 16),
+                    child: Text('Alle Konten', style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   ),
-                  _buildDrawerItem(Icons.inbox, 'Posteingang', '4', true),
-                  _buildDrawerItem(
-                    Icons.edit_outlined,
-                    'Entwürfe',
-                    '24',
-                    false,
-                  ),
-                  _buildDrawerItem(
-                    Icons.inventory_2_outlined,
-                    'Archiv',
-                    '',
-                    false,
-                  ),
-                  _buildDrawerItem(Icons.send_outlined, 'Gesendet', '', false),
-                  _buildDrawerItem(
-                    Icons.schedule,
-                    'Erneut erinnern',
-                    '',
-                    false,
-                  ),
-                  _buildDrawerItem(
-                    Icons.delete_outline,
-                    'Gelöscht',
-                    '354',
-                    false,
-                  ),
-                  _buildDrawerItem(
-                    Icons.folder_off_outlined,
-                    'Junk-E-Mail',
-                    '',
-                    false,
-                  ),
+                  _buildDrawerItem(Icons.inbox, 'Posteingang', 'inbox', '4'),
+                  _buildDrawerItem(Icons.edit_outlined, 'Entwürfe', 'drafts', '24'),
+                  _buildDrawerItem(Icons.inventory_2_outlined, 'Archiv', 'archive', ''),
+                  _buildDrawerItem(Icons.send_outlined, 'Gesendet', 'sent', ''),
+                  _buildDrawerItem(Icons.delete_outline, 'Gelöscht', 'trash', '354'),
+                  _buildDrawerItem(Icons.folder_off_outlined, 'Junk-E-Mail', 'junk', ''),
                 ],
               ),
             ),
@@ -543,18 +571,14 @@ class MailDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(
-    IconData icon,
-    String title,
-    String badge,
-    bool isSelected,
-  ) {
+  Widget _buildDrawerItem(IconData icon, String title, String folder, String badge) {
+    final isSelected = currentFolder == folder;
     return ListTile(
-      leading: Icon(icon, color: isSelected ? outlookBlue : Colors.black54),
+      leading: Icon(icon, color: isSelected ? outlookBlue : Colors.grey),
       title: Text(
         title,
         style: TextStyle(
-          color: isSelected ? outlookBlue : Colors.black87,
+          color: isSelected ? outlookBlue : null,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -562,21 +586,18 @@ class MailDrawer extends StatelessWidget {
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? outlookBlue.withOpacity(0.2)
-                    : Colors.grey.shade200,
+                color: isSelected ? outlookBlue.withOpacity(0.2) : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 badge,
-                style: TextStyle(
-                  color: isSelected ? outlookBlue : Colors.black54,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: isSelected ? outlookBlue : Colors.black54, fontSize: 12),
               ),
             )
           : null,
-      onTap: () {},
+      onTap: () {
+        onFolderSelected(folder);
+      },
     );
   }
 }
@@ -590,8 +611,11 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Einstellungen'), elevation: 0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Einstellungen'),
+        elevation: 0,
+      ),
       body: ListView(
         children: [
           Padding(
@@ -601,7 +625,7 @@ class SettingsScreen extends StatelessWidget {
                 hintText: 'Suchen',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -611,10 +635,23 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text(
-              'Schnelleinstellungen',
-              style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold),
-            ),
+            child: Text('Schnelleinstellungen', style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold)),
+          ),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (context, currentMode, _) {
+              return ListTile(
+                leading: const Icon(Icons.dark_mode_outlined),
+                title: const Text('Dunkles Design (Dark Mode)'),
+                trailing: Switch(
+                  value: currentMode == ThemeMode.dark,
+                  activeColor: outlookBlue,
+                  onChanged: (value) {
+                    themeNotifier.value = value ? ThemeMode.dark : ThemeMode.light;
+                  },
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.format_paint_outlined),
@@ -687,16 +724,14 @@ class EmailDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final senderName = email['sender'].split('@').first;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(''),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.archive_outlined),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.archive_outlined), onPressed: () {}),
           IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {}),
           IconButton(
             icon: const Icon(Icons.mark_email_unread_outlined),
@@ -739,10 +774,7 @@ class EmailDetailScreen extends StatelessWidget {
                       ),
                       Text(
                         email['sender'],
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
@@ -754,6 +786,21 @@ class EmailDetailScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 32),
+            if (email['attachments'] != null && (email['attachments'] as List).isNotEmpty) ...[
+              const Text('Anhänge', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                children: (email['attachments'] as List).map((att) {
+                  return Chip(
+                    avatar: const Icon(Icons.insert_drive_file),
+                    label: Text(att['name'] ?? 'Datei'),
+                  );
+                }).toList(),
+              ),
+              const Divider(),
+              const SizedBox(height: 16),
+            ],
             MarkdownBody(
               data: email['body'],
               styleSheet: MarkdownStyleSheet(
@@ -795,6 +842,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
 
   bool isSending = false;
   bool isPreviewMode = false;
+  List<PlatformFile> attachedFiles = [];
 
   void _insertMarkdown(String prefix, [String suffix = '']) {
     final text = _bodyController.text;
@@ -828,6 +876,15 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     }
   }
 
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    if (result != null) {
+      setState(() {
+        attachedFiles.addAll(result.files);
+      });
+    }
+  }
+
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -836,18 +893,30 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     });
 
     try {
-      final response = await http.post(
+      final request = http.MultipartRequest(
+        'POST',
         Uri.parse('https://strong-jeans-shave.loca.lt/api/emails'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true',
-        },
-        body: json.encode({
-          'sender': _toController.text,
-          'subject': _subjectController.text,
-          'body': _bodyController.text,
-        }),
       );
+      
+      request.headers['Bypass-Tunnel-Reminder'] = 'true';
+      request.fields['sender'] = _toController.text;
+      request.fields['subject'] = _subjectController.text;
+      request.fields['body'] = _bodyController.text;
+
+      for (var file in attachedFiles) {
+        if (file.path != null) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'attachments[]',
+              file.path!,
+              filename: file.name,
+            )
+          );
+        }
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 201) {
         if (mounted) {
@@ -857,7 +926,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
           );
         }
       } else {
-        throw Exception('Server antwortete mit Fehler');
+        throw Exception('Server antwortete mit Fehler: ${response.body}');
       }
     } catch (e) {
       if (mounted) {
@@ -876,11 +945,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Neue Nachricht'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            tooltip: 'Anhang hinzufügen',
+            onPressed: _pickFiles,
+          ),
           IconButton(
             icon: Icon(isPreviewMode ? Icons.edit : Icons.remove_red_eye),
             tooltip: isPreviewMode ? 'Bearbeiten' : 'Vorschau',
@@ -936,9 +1012,34 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
               ),
             ),
             const Divider(height: 1),
+            if (attachedFiles.isNotEmpty) ...[
+              Container(
+                height: 50,
+                color: isDark ? Colors.grey[800] : Colors.grey.shade100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: attachedFiles.length,
+                  itemBuilder: (context, index) {
+                    final file = attachedFiles[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+                      child: Chip(
+                        label: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        onDeleted: () {
+                          setState(() {
+                            attachedFiles.removeAt(index);
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const Divider(height: 1),
+            ],
             if (!isPreviewMode) ...[
               Container(
-                color: Colors.grey.shade100,
+                color: isDark ? Colors.grey[850] : Colors.grey.shade100,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8.0,
                   vertical: 4.0,
