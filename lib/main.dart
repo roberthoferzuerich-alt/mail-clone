@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http_parser/http_parser.dart';
 
 void main() {
   runApp(const MainApp());
@@ -177,10 +176,12 @@ class _EmailListScreenState extends State<EmailListScreen> {
     // Wenn wir in "inbox" sind, synce auch IMAP
     if (currentFolder == 'inbox') {
       try {
-        await http.get(
-          Uri.parse('$apiUrl/imap/sync'),
-          headers: {'Bypass-Tunnel-Reminder': 'true'},
-        ).timeout(const Duration(seconds: 15));
+        await http
+            .get(
+              Uri.parse('$apiUrl/imap/sync'),
+              headers: {'Bypass-Tunnel-Reminder': 'true'},
+            )
+            .timeout(const Duration(seconds: 15));
       } catch (_) {}
     }
     await fetchEmails();
@@ -233,7 +234,10 @@ class _EmailListScreenState extends State<EmailListScreen> {
           builder: (context) => IconButton(
             icon: CircleAvatar(
               backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-              child: Icon(Icons.home, color: isDark ? Colors.white : outlookBlue),
+              child: Icon(
+                Icons.home,
+                color: isDark ? Colors.white : outlookBlue,
+              ),
             ),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
@@ -299,31 +303,52 @@ class _EmailListScreenState extends State<EmailListScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? Colors.grey[800] : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('Relevant', style: TextStyle(color: isDark ? Colors.white : outlookBlue, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Relevant',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : outlookBlue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text('Sonstige', style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        'Sonstige',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Filter', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Filter',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -499,7 +524,7 @@ class MailDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Drawer(
       child: Row(
         children: [
@@ -514,13 +539,20 @@ class MailDrawer extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: isDark ? Colors.grey[800] : Colors.white,
                     radius: 24,
-                    child: Icon(Icons.home, color: isDark ? Colors.white : outlookBlue, size: 28),
+                    child: Icon(
+                      Icons.home,
+                      color: isDark ? Colors.white : outlookBlue,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.orange.shade300,
-                    child: const Text('RH', style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'RH',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Icon(Icons.email_outlined, color: Colors.grey),
@@ -530,12 +562,17 @@ class MailDrawer extends StatelessWidget {
                   const Icon(Icons.help_outline, color: Colors.grey),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: Colors.grey),
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.grey,
+                    ),
                     onPressed: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -554,14 +591,40 @@ class MailDrawer extends StatelessWidget {
                   const SizedBox(height: 40),
                   Padding(
                     padding: const EdgeInsets.only(left: 16, bottom: 16),
-                    child: Text('Alle Konten', style: TextStyle(fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    child: Text(
+                      'Alle Konten',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
                   ),
                   _buildDrawerItem(Icons.inbox, 'Posteingang', 'inbox', '4'),
-                  _buildDrawerItem(Icons.edit_outlined, 'Entwürfe', 'drafts', '24'),
-                  _buildDrawerItem(Icons.inventory_2_outlined, 'Archiv', 'archive', ''),
+                  _buildDrawerItem(
+                    Icons.edit_outlined,
+                    'Entwürfe',
+                    'drafts',
+                    '24',
+                  ),
+                  _buildDrawerItem(
+                    Icons.inventory_2_outlined,
+                    'Archiv',
+                    'archive',
+                    '',
+                  ),
                   _buildDrawerItem(Icons.send_outlined, 'Gesendet', 'sent', ''),
-                  _buildDrawerItem(Icons.delete_outline, 'Gelöscht', 'trash', '354'),
-                  _buildDrawerItem(Icons.folder_off_outlined, 'Junk-E-Mail', 'junk', ''),
+                  _buildDrawerItem(
+                    Icons.delete_outline,
+                    'Gelöscht',
+                    'trash',
+                    '354',
+                  ),
+                  _buildDrawerItem(
+                    Icons.folder_off_outlined,
+                    'Junk-E-Mail',
+                    'junk',
+                    '',
+                  ),
                 ],
               ),
             ),
@@ -571,7 +634,12 @@ class MailDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, String folder, String badge) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    String folder,
+    String badge,
+  ) {
     final isSelected = currentFolder == folder;
     return ListTile(
       leading: Icon(icon, color: isSelected ? outlookBlue : Colors.grey),
@@ -586,12 +654,17 @@ class MailDrawer extends StatelessWidget {
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? outlookBlue.withOpacity(0.2) : Colors.grey.shade200,
+                color: isSelected
+                    ? outlookBlue.withOpacity(0.2)
+                    : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 badge,
-                style: TextStyle(color: isSelected ? outlookBlue : Colors.black54, fontSize: 12),
+                style: TextStyle(
+                  color: isSelected ? outlookBlue : Colors.black54,
+                  fontSize: 12,
+                ),
               ),
             )
           : null,
@@ -612,10 +685,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Einstellungen'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Einstellungen'), elevation: 0),
       body: ListView(
         children: [
           Padding(
@@ -625,7 +695,9 @@ class SettingsScreen extends StatelessWidget {
                 hintText: 'Suchen',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey.shade100,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[800]
+                    : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -635,7 +707,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text('Schnelleinstellungen', style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Schnelleinstellungen',
+              style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold),
+            ),
           ),
           ValueListenableBuilder<ThemeMode>(
             valueListenable: themeNotifier,
@@ -647,7 +722,9 @@ class SettingsScreen extends StatelessWidget {
                   value: currentMode == ThemeMode.dark,
                   activeColor: outlookBlue,
                   onChanged: (value) {
-                    themeNotifier.value = value ? ThemeMode.dark : ThemeMode.light;
+                    themeNotifier.value = value
+                        ? ThemeMode.dark
+                        : ThemeMode.light;
                   },
                 ),
               );
@@ -725,13 +802,16 @@ class EmailDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final senderName = email['sender'].split('@').first;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(''),
         actions: [
-          IconButton(icon: const Icon(Icons.archive_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.archive_outlined),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {}),
           IconButton(
             icon: const Icon(Icons.mark_email_unread_outlined),
@@ -774,7 +854,10 @@ class EmailDetailScreen extends StatelessWidget {
                       ),
                       Text(
                         email['sender'],
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -786,8 +869,12 @@ class EmailDetailScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 32),
-            if (email['attachments'] != null && (email['attachments'] as List).isNotEmpty) ...[
-              const Text('Anhänge', style: TextStyle(fontWeight: FontWeight.bold)),
+            if (email['attachments'] != null &&
+                (email['attachments'] as List).isNotEmpty) ...[
+              const Text(
+                'Anhänge',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8.0,
@@ -877,10 +964,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   }
 
   Future<void> _pickFiles() async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-    if (result != null) {
+    final result = await FilePicker.pickFiles();
+    if (result.isNotEmpty) {
       setState(() {
-        attachedFiles.addAll(result.files);
+        attachedFiles.addAll(result);
       });
     }
   }
@@ -897,7 +984,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         'POST',
         Uri.parse('https://strong-jeans-shave.loca.lt/api/emails'),
       );
-      
+
       request.headers['Bypass-Tunnel-Reminder'] = 'true';
       request.fields['sender'] = _toController.text;
       request.fields['subject'] = _subjectController.text;
@@ -910,7 +997,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
               'attachments[]',
               file.path!,
               filename: file.name,
-            )
+            ),
           );
         }
       }
@@ -946,7 +1033,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -1022,9 +1109,17 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                   itemBuilder: (context, index) {
                     final file = attachedFiles[index];
                     return Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
+                      padding: const EdgeInsets.only(
+                        left: 8.0,
+                        top: 8.0,
+                        bottom: 8.0,
+                      ),
                       child: Chip(
-                        label: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        label: Text(
+                          file.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         onDeleted: () {
                           setState(() {
                             attachedFiles.removeAt(index);
@@ -1081,7 +1176,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                       tooltip: 'Link',
                     ),
                     IconButton(
-                      icon: const Icon(Icons.table_chart_outlined, color: Colors.black54),
+                      icon: const Icon(
+                        Icons.table_chart_outlined,
+                        color: Colors.black54,
+                      ),
                       onPressed: () => _insertMarkdown(
                         '\n| Kopf 1 | Kopf 2 | Kopf 3 |\n| :--- | :--- | :--- |\n| Wert 1 | Wert 2 | Wert 3 |\n| Wert 4 | Wert 5 | Wert 6 |\n',
                       ),
