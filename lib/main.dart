@@ -66,18 +66,12 @@ class _MainScreenState extends State<MainScreen> {
         selectedItemColor: outlookBlue,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.email),
-            label: 'E-Mail',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.email), label: 'E-Mail'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Kalender',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            label: 'Apps',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Apps'),
         ],
       ),
     );
@@ -179,9 +173,15 @@ class _EmailListScreenState extends State<EmailListScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text('Posteingang', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: const Text(
+          'Posteingang',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
         ],
       ),
@@ -198,36 +198,57 @@ class _EmailListScreenState extends State<EmailListScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text('Relevant', style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Relevant',
+                        style: TextStyle(
+                          color: outlookBlue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text('Sonstige', style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        'Sonstige',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Filter', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Filter',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
           ),
-          
+
           // E-Mail Liste
           Expanded(
             child: RefreshIndicator(
@@ -235,106 +256,135 @@ class _EmailListScreenState extends State<EmailListScreen> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : emails.isEmpty
-                      ? ListView(
-                          children: const [
-                            SizedBox(height: 200),
-                            Center(child: Text('Posteingang ist leer')),
-                          ],
-                        )
-                      : ListView.separated(
-                          itemCount: emails.length + 1, // +1 für den Header
-                          separatorBuilder: (context, index) => const Divider(height: 1, indent: 72, color: Colors.black12),
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return const Padding(
-                                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                                child: Text('Letzte Woche', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                              );
-                            }
-                            
-                            final email = emails[index - 1];
-                            final isRead = email['isRead'] ?? false;
-                            
-                            return Dismissible(
-                              key: Key(email['id'].toString()),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                color: Colors.red,
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(Icons.delete, color: Colors.white),
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: Text('Posteingang ist leer')),
+                      ],
+                    )
+                  : ListView.separated(
+                      itemCount: emails.length + 1, // +1 für den Header
+                      separatorBuilder: (context, index) => const Divider(
+                        height: 1,
+                        indent: 72,
+                        color: Colors.black12,
+                      ),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return const Padding(
+                            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Text(
+                              'Letzte Woche',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
                               ),
-                              onDismissed: (direction) {
-                                _deleteEmail(email['id'], index - 1);
-                              },
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                leading: CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: Colors.primaries[email['sender'].length % Colors.primaries.length].shade400,
+                            ),
+                          );
+                        }
+
+                        final email = emails[index - 1];
+                        final isRead = email['isRead'] ?? false;
+
+                        return Dismissible(
+                          key: Key(email['id'].toString()),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onDismissed: (direction) {
+                            _deleteEmail(email['id'], index - 1);
+                          },
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            leading: CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Colors
+                                  .primaries[email['sender'].length %
+                                      Colors.primaries.length]
+                                  .shade400,
+                              child: Text(
+                                email['sender'][0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    email['sender'][0].toUpperCase(),
-                                    style: const TextStyle(fontSize: 20, color: Colors.white),
+                                    email['sender'].split('@').first,
+                                    style: TextStyle(
+                                      fontWeight: isRead
+                                          ? FontWeight.normal
+                                          : FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                title: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        email['sender'].split('@').first,
-                                        style: TextStyle(
-                                          fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                          fontSize: 16,
-                                          color: Colors.black87,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    Text(
-                                      _formatDate(email['date']),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                        color: isRead ? Colors.grey : outlookBlue,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  _formatDate(email['date']),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isRead
+                                        ? FontWeight.normal
+                                        : FontWeight.bold,
+                                    color: isRead ? Colors.grey : outlookBlue,
+                                  ),
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      email['subject'],
-                                      style: TextStyle(
-                                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      email['body'],
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: Colors.grey),
-                                    ),
-                                  ],
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  email['subject'],
+                                  style: TextStyle(
+                                    fontWeight: isRead
+                                        ? FontWeight.normal
+                                        : FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                onTap: () {
-                                  _markAsRead(email['id'], index - 1);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => EmailDetailScreen(email: email),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
+                                Text(
+                                  email['body'],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              _markAsRead(email['id'], index - 1);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EmailDetailScreen(email: email),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
         ],
@@ -380,47 +430,57 @@ class MailDrawer extends StatelessWidget {
       child: Row(
         children: [
           // Schmale linke Leiste
-          Container(
-            width: 70,
+          Material(
             color: Colors.grey.shade100,
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 24,
-                  child: Icon(Icons.home, color: outlookBlue, size: 28),
-                ),
-                const SizedBox(height: 16),
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.orange.shade300,
-                  child: const Text('RH', style: TextStyle(color: Colors.white)),
-                ),
-                const SizedBox(height: 16),
-                const Icon(Icons.email_outlined, color: Colors.black54),
-                const SizedBox(height: 16),
-                const Icon(Icons.add, color: Colors.black54),
-                const Spacer(),
-                const Icon(Icons.help_outline, color: Colors.black54),
-                const SizedBox(height: 16),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined, color: Colors.black54),
-                  onPressed: () {
-                    Navigator.pop(context); // Schließe Drawer
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
+            child: SizedBox(
+              width: 70,
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  const CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 24,
+                    child: Icon(Icons.home, color: outlookBlue, size: 28),
+                  ),
+                  const SizedBox(height: 16),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.orange.shade300,
+                    child: const Text(
+                      'RH',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Icon(Icons.email_outlined, color: Colors.black54),
+                  const SizedBox(height: 16),
+                  const Icon(Icons.add, color: Colors.black54),
+                  const Spacer(),
+                  const Icon(Icons.help_outline, color: Colors.black54),
+                  const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.black54,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context); // Schließe Drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
           // Breiter rechter Bereich
           Expanded(
-            child: Container(
+            child: Material(
               color: Colors.white,
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -428,15 +488,43 @@ class MailDrawer extends StatelessWidget {
                   const SizedBox(height: 40),
                   const Padding(
                     padding: EdgeInsets.only(left: 16, bottom: 16),
-                    child: Text('Alle Konten', style: TextStyle(fontSize: 18, color: Colors.black87)),
+                    child: Text(
+                      'Alle Konten',
+                      style: TextStyle(fontSize: 18, color: Colors.black87),
+                    ),
                   ),
                   _buildDrawerItem(Icons.inbox, 'Posteingang', '4', true),
-                  _buildDrawerItem(Icons.edit_outlined, 'Entwürfe', '24', false),
-                  _buildDrawerItem(Icons.inventory_2_outlined, 'Archiv', '', false),
+                  _buildDrawerItem(
+                    Icons.edit_outlined,
+                    'Entwürfe',
+                    '24',
+                    false,
+                  ),
+                  _buildDrawerItem(
+                    Icons.inventory_2_outlined,
+                    'Archiv',
+                    '',
+                    false,
+                  ),
                   _buildDrawerItem(Icons.send_outlined, 'Gesendet', '', false),
-                  _buildDrawerItem(Icons.schedule, 'Erneut erinnern', '', false),
-                  _buildDrawerItem(Icons.delete_outline, 'Gelöscht', '354', false),
-                  _buildDrawerItem(Icons.folder_off_outlined, 'Junk-E-Mail', '', false),
+                  _buildDrawerItem(
+                    Icons.schedule,
+                    'Erneut erinnern',
+                    '',
+                    false,
+                  ),
+                  _buildDrawerItem(
+                    Icons.delete_outline,
+                    'Gelöscht',
+                    '354',
+                    false,
+                  ),
+                  _buildDrawerItem(
+                    Icons.folder_off_outlined,
+                    'Junk-E-Mail',
+                    '',
+                    false,
+                  ),
                 ],
               ),
             ),
@@ -446,7 +534,12 @@ class MailDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, String badge, bool isSelected) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    String badge,
+    bool isSelected,
+  ) {
     return ListTile(
       leading: Icon(icon, color: isSelected ? outlookBlue : Colors.black54),
       title: Text(
@@ -460,12 +553,17 @@ class MailDrawer extends StatelessWidget {
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? outlookBlue.withOpacity(0.2) : Colors.grey.shade200,
+                color: isSelected
+                    ? outlookBlue.withOpacity(0.2)
+                    : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 badge,
-                style: TextStyle(color: isSelected ? outlookBlue : Colors.black54, fontSize: 12),
+                style: TextStyle(
+                  color: isSelected ? outlookBlue : Colors.black54,
+                  fontSize: 12,
+                ),
               ),
             )
           : null,
@@ -484,10 +582,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Einstellungen'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Einstellungen'), elevation: 0),
       body: ListView(
         children: [
           Padding(
@@ -507,7 +602,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Text('Schnelleinstellungen', style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Schnelleinstellungen',
+              style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.format_paint_outlined),
@@ -527,7 +625,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
-            child: Text('Allgemein', style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Allgemein',
+              style: TextStyle(color: outlookBlue, fontWeight: FontWeight.bold),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.manage_accounts_outlined),
@@ -577,15 +678,21 @@ class EmailDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final senderName = email['sender'].split('@').first;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(''),
         actions: [
-          IconButton(icon: const Icon(Icons.archive_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.archive_outlined),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.mark_email_unread_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.mark_email_unread_outlined),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
@@ -604,7 +711,10 @@ class EmailDetailScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: outlookBlue.withOpacity(0.2),
-                  child: Text(senderName[0].toUpperCase(), style: const TextStyle(color: outlookBlue)),
+                  child: Text(
+                    senderName[0].toUpperCase(),
+                    style: const TextStyle(color: outlookBlue),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -613,11 +723,17 @@ class EmailDetailScreen extends StatelessWidget {
                     children: [
                       Text(
                         senderName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
                         email['sender'],
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -665,12 +781,12 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   final _toController = TextEditingController();
   final _subjectController = TextEditingController();
   final _bodyController = TextEditingController();
-  
+
   bool isSending = false;
 
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() {
       isSending = true;
     });
@@ -680,7 +796,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         Uri.parse('https://strong-jeans-shave.loca.lt/api/emails'),
         headers: {
           'Content-Type': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true'
+          'Bypass-Tunnel-Reminder': 'true',
         },
         body: json.encode({
           'sender': _toController.text,
@@ -722,8 +838,15 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         title: const Text('Neue Nachricht'),
         actions: [
           IconButton(
-            icon: isSending 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            icon: isSending
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.send),
             onPressed: isSending ? null : _sendEmail,
           ),
@@ -742,7 +865,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                   border: InputBorder.none,
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value!.isEmpty || !value.contains('@') ? 'Bitte gültige E-Mail eingeben' : null,
+                validator: (value) => value!.isEmpty || !value.contains('@')
+                    ? 'Bitte gültige E-Mail eingeben'
+                    : null,
               ),
             ),
             const Divider(height: 1),
@@ -770,7 +895,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  validator: (value) => value!.isEmpty ? 'Nachricht darf nicht leer sein' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Nachricht darf nicht leer sein' : null,
                 ),
               ),
             ),
