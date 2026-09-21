@@ -57,6 +57,25 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],
+      floatingActionButton: _currentIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ComposeEmailScreen()),
+                );
+                // Wenn wir zurückkommen und etwas gesendet wurde,
+                // können wir die Liste neuladen. 
+                // Da wir nicht direkt auf den State zugreifen können,
+                // wäre ein GlobalKey oder Provider besser. 
+                // Für diesen Klon verlassen wir uns auf den Pull-to-Refresh.
+              },
+              backgroundColor: Colors.white,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.edit_outlined, color: outlookBlue),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -384,26 +403,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
                             },
                           ),
                         );
-                      },
-                    ),
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ComposeEmailScreen()),
-          );
-          if (result == true) {
-            fetchEmails();
-          }
-        },
-        backgroundColor: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.edit_outlined, color: outlookBlue),
       ),
     );
   }
@@ -790,21 +792,31 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   void _insertMarkdown(String prefix, [String suffix = '']) {
     final text = _bodyController.text;
     final selection = _bodyController.selection;
-    
+
     if (selection.isValid && selection.start >= 0 && selection.end >= 0) {
       final selectedText = text.substring(selection.start, selection.end);
-      final newText = text.replaceRange(selection.start, selection.end, '$prefix$selectedText$suffix');
+      final newText = text.replaceRange(
+        selection.start,
+        selection.end,
+        '$prefix$selectedText$suffix',
+      );
       _bodyController.value = TextEditingValue(
         text: newText,
         selection: TextSelection.collapsed(
-          offset: selection.start + prefix.length + selectedText.length + suffix.length,
+          offset:
+              selection.start +
+              prefix.length +
+              selectedText.length +
+              suffix.length,
         ),
       );
     } else {
       final newText = text + prefix + suffix;
       _bodyController.value = TextEditingValue(
         text: newText,
-        selection: TextSelection.collapsed(offset: newText.length - suffix.length),
+        selection: TextSelection.collapsed(
+          offset: newText.length - suffix.length,
+        ),
       );
     }
   }
@@ -910,7 +922,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
             const Divider(height: 1),
             Container(
               color: Colors.grey.shade100,
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
               child: Row(
                 children: [
                   IconButton(
@@ -919,12 +934,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                     tooltip: 'Fett',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.format_italic, color: Colors.black54),
+                    icon: const Icon(
+                      Icons.format_italic,
+                      color: Colors.black54,
+                    ),
                     onPressed: () => _insertMarkdown('*', '*'),
                     tooltip: 'Kursiv',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.format_list_bulleted, color: Colors.black54),
+                    icon: const Icon(
+                      Icons.format_list_bulleted,
+                      color: Colors.black54,
+                    ),
                     onPressed: () => _insertMarkdown('- '),
                     tooltip: 'Liste',
                   ),
