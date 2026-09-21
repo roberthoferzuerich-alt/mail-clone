@@ -194,10 +194,19 @@ class _EmailListScreenState extends State<EmailListScreen> {
     });
 
     try {
-      await http.delete(
+      final response = await http.delete(
         Uri.parse('$apiUrl/emails/$id'),
         headers: {'Bypass-Tunnel-Reminder': 'true'},
       );
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('E-Mail gelöscht!')),
+          );
+        }
+      } else {
+        throw Exception();
+      }
     } catch (e) {
       setState(() {
         emails.insert(index, deletedEmail);
@@ -216,17 +225,29 @@ class _EmailListScreenState extends State<EmailListScreen> {
         Uri.parse('$apiUrl/emails/$id/move'),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Bypass-Tunnel-Reminder': 'true'
         },
         body: json.encode({'folder': 'archive'}),
       );
       if (response.statusCode != 200) {
         throw Exception();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('E-Mail ins Archiv verschoben!')),
+          );
+        }
       }
     } catch (e) {
-      setState(() {
-        emails.insert(index, archivedEmail);
-      });
+      if (mounted) {
+        setState(() {
+          emails.insert(index, archivedEmail);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Archivieren: $e')),
+        );
+      }
     }
   }
 
@@ -453,7 +474,8 @@ class _EmailListScreenState extends State<EmailListScreen> {
                           onDismissed: (direction) {
                             if (direction == DismissDirection.startToEnd) {
                               _archiveEmail(email['id'], index - 1);
-                            } else if (direction == DismissDirection.endToStart) {
+                            } else if (direction ==
+                                DismissDirection.endToStart) {
                               _deleteEmail(email['id'], index - 1);
                             }
                           },
