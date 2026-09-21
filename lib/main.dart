@@ -40,8 +40,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
   List<dynamic> emails = [];
   bool isLoading = true;
 
-  // HINWEIS: Hier deine lokale IP (Port 8000) für physische Geräte eintragen
-  final String apiUrl = 'http://192.168.1.110:8000/api/emails';
+  // HINWEIS: Wir verwenden nun einen öffentlichen Tunnel (localtunnel),
+  // damit dein Handy garantiert darauf zugreifen kann.
+  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api/emails';
 
   @override
   void initState() {
@@ -54,7 +55,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
       isLoading = true;
     });
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      // Wichtig: localtunnel benötigt diesen Header für APIs!
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
       if (response.statusCode == 200) {
         setState(() {
           emails = json.decode(response.body);
@@ -70,9 +75,98 @@ class _EmailListScreenState extends State<EmailListScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Konnte E-Mails nicht laden. Bitte Verbindung prüfen.')),
+          const SnackBar(
+            content: Text(
+              'Konnte E-Mails nicht laden. Bitte Verbindung prüfen.',
+            ),
+          ),
         );
       }
+    }
+  }
+
+  Future<void> _deleteEmail(int id, int index) async {
+    // Optimistisch aus der Liste entfernen für eine flüssige UI
+    final deletedEmail = emails[index];
+    setState(() {
+      emails.removeAt(index);
+    });
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/$id'),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Löschen fehlgeschlagen');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('E-Mail gelöscht')));
+      }
+    } catch (e) {
+      // Bei Fehler wiederherstellen
+      setState(() {
+        emails.insert(index, deletedEmail);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Fehler beim Löschen')));
+      }
+    }
+  }
+
+  Future<void> _markAsRead(int id, int index) async {
+    if (emails[index]['isRead'] == true) return;
+
+    // Optimistisch auf gelesen setzen
+    setState(() {
+      emails[index]['isRead'] = true;
+    });
+
+    try {
+      await http.patch(
+        Uri.parse('$apiUrl/$id/read'),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
+    } catch (e) {
+      print('Fehler beim Markieren als gelesen: $e');
+    }
+  }
+
+  Future<void> _syncIMAP() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response = await http.get(
+        Uri.parse('https://strong-jeans-shave.loca.lt/api/imap/sync'),
+        headers: {'Bypass-Tunnel-Reminder': 'true'},
+      );
+
+      if (response.statusCode == 200) {
+        final result = json.decode(response.body);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result['message'] ?? 'Erfolgreich importiert')),
+          );
+        }
+        await fetchEmails(); // Lade die Liste neu
+      } else {
+        throw Exception('Fehler beim IMAP-Sync');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fehler beim IMAP Sync (Zugangsdaten in .env geprüft?)')),
+        );
+      }
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -84,6 +178,12 @@ class _EmailListScreenState extends State<EmailListScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
           IconButton(
+            tooltip: 'IMAP Import',
+            icon: const Icon(Icons.cloud_download_outlined),
+            onPressed: _syncIMAP,
+          ),
+          IconButton(
+            tooltip: 'Aktualisieren',
             icon: const Icon(Icons.refresh),
             onPressed: fetchEmails,
           ),
@@ -95,86 +195,124 @@ class _EmailListScreenState extends State<EmailListScreen> {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : emails.isEmpty
-                ? ListView(
-                    children: const [
-                      SizedBox(height: 200),
-                      Center(child: Text('Dein Posteingang ist leer!', style: TextStyle(fontSize: 16))),
-                    ],
-                  )
-                : ListView.separated(
-                    itemCount: emails.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, indent: 72),
-                    itemBuilder: (context, index) {
-                      final email = emails[index];
-                      final isRead = email['isRead'] ?? false;
-                      
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        leading: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.primaries[email['sender'].length % Colors.primaries.length].shade200,
-                          child: Text(
-                            email['sender'][0].toUpperCase(),
-                            style: const TextStyle(fontSize: 20, color: Colors.black87),
+            ? ListView(
+                children: const [
+                  SizedBox(height: 200),
+                  Center(
+                    child: Text(
+                      'Dein Posteingang ist leer!',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              )
+            : ListView.separated(
+                itemCount: emails.length,
+                separatorBuilder: (context, index) =>
+                    const Divider(height: 1, indent: 72),
+                itemBuilder: (context, index) {
+                  final email = emails[index];
+                  final isRead = email['isRead'] ?? false;
+
+                  return Dismissible(
+                    key: Key(email['id'].toString()),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    onDismissed: (direction) {
+                      _deleteEmail(email['id'], index);
+                    },
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors
+                            .primaries[email['sender'].length %
+                                Colors.primaries.length]
+                            .shade200,
+                        child: Text(
+                          email['sender'][0].toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.black87,
                           ),
                         ),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                email['sender'].split('@').first,
-                                style: TextStyle(
-                                  fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              _formatDate(email['date']),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              email['sender'].split('@').first,
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                color: isRead ? Colors.grey : Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              email['subject'],
-                              style: TextStyle(
-                                fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                color: Colors.black87,
+                                fontWeight: isRead
+                                    ? FontWeight.normal
+                                    : FontWeight.bold,
+                                fontSize: 16,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              email['body'],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.grey),
+                          ),
+                          Text(
+                            _formatDate(email['date']),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.bold,
+                              color: isRead
+                                  ? Colors.grey
+                                  : Theme.of(context).colorScheme.primary,
                             ),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EmailDetailScreen(email: email),
+                          ),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            email['subject'],
+                            style: TextStyle(
+                              fontWeight: isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.bold,
+                              color: Colors.black87,
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            email['body'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        _markAsRead(email['id'], index);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EmailDetailScreen(email: email),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -204,7 +342,6 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 }
 
-
 // ----------------------------------------------------------------------
 // Detailansicht: Eine einzelne E-Mail lesen
 // ----------------------------------------------------------------------
@@ -216,14 +353,20 @@ class EmailDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final senderName = email['sender'].split('@').first;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(''),
         actions: [
-          IconButton(icon: const Icon(Icons.archive_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.archive_outlined),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.mark_email_unread_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.mark_email_unread_outlined),
+            onPressed: () {},
+          ),
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
@@ -251,11 +394,17 @@ class EmailDetailScreen extends StatelessWidget {
                     children: [
                       Text(
                         senderName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
                         email['sender'],
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -288,7 +437,6 @@ class EmailDetailScreen extends StatelessWidget {
   }
 }
 
-
 // ----------------------------------------------------------------------
 // Compose-Screen: Eine neue E-Mail schreiben (POST Request)
 // ----------------------------------------------------------------------
@@ -304,22 +452,26 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   final _toController = TextEditingController();
   final _subjectController = TextEditingController();
   final _bodyController = TextEditingController();
-  
+
   bool isSending = false;
 
   Future<void> _sendEmail() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() {
       isSending = true;
     });
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.110:8000/api/emails'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('https://strong-jeans-shave.loca.lt/api/emails'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true',
+        },
         body: json.encode({
-          'sender': _toController.text, // In einem echten System wäre das der Empfänger, für unser Datenmodell nutzen wir es als Absender/Kontakt
+          'sender': _toController
+              .text, // In einem echten System wäre das der Empfänger, für unser Datenmodell nutzen wir es als Absender/Kontakt
           'subject': _subjectController.text,
           'body': _bodyController.text,
         }),
@@ -357,8 +509,12 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         title: const Text('Neue Nachricht'),
         actions: [
           IconButton(
-            icon: isSending 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            icon: isSending
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.send),
             onPressed: isSending ? null : _sendEmail,
           ),
@@ -377,7 +533,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                   border: InputBorder.none,
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value!.isEmpty || !value.contains('@') ? 'Bitte gültige E-Mail eingeben' : null,
+                validator: (value) => value!.isEmpty || !value.contains('@')
+                    ? 'Bitte gültige E-Mail eingeben'
+                    : null,
               ),
             ),
             const Divider(height: 1),
@@ -405,7 +563,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  validator: (value) => value!.isEmpty ? 'Nachricht darf nicht leer sein' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Nachricht darf nicht leer sein' : null,
                 ),
               ),
             ),
