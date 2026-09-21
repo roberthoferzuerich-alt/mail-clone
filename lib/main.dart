@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
+import 'services/auth_service.dart';
 
 const Color outlookBlue = Color(0xFF0078D4);
 final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
@@ -42,7 +44,18 @@ class MainApp extends StatelessWidget {
               unselectedItemColor: Colors.grey,
             ),
           ),
-          home: const MainScreen(),
+          home: FutureBuilder<bool>(
+            future: AuthService().isLoggedIn(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.data == true) {
+                return const MainScreen();
+              }
+              return const LoginScreen();
+            },
+          ),
         );
       },
     );

@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 import '../widgets/mail_drawer.dart';
 import 'email_detail_screen.dart';
 import 'compose_email_screen.dart';
-import '../main.dart'; // for apiUrl, outlookBlue
+import '../main.dart';
+import '../services/auth_service.dart'; // for apiUrl, outlookBlue
 
 class EmailListScreen extends StatefulWidget {
   const EmailListScreen({super.key});
@@ -21,7 +22,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   Map<String, int> unreadCounts = {};
-  
+
   final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
 
   @override
@@ -32,10 +33,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> fetchFolderCounts() async {
+    final token = await AuthService().getToken();
     try {
       final response = await http.get(
         Uri.parse('$apiUrl/emails/counts'),
-        headers: {'Bypass-Tunnel-Reminder': 'true'},
+        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -49,13 +51,14 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> fetchEmails() async {
+    final token = await AuthService().getToken();
     setState(() {
       isLoading = true;
     });
     try {
       final response = await http.get(
         Uri.parse('$apiUrl/emails?folder=$currentFolder&search=$searchQuery'),
-        headers: {'Bypass-Tunnel-Reminder': 'true'},
+        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
         setState(() {
@@ -73,13 +76,14 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> _refreshEmails() async {
+    final token = await AuthService().getToken();
     // Wenn wir in "inbox" sind, synce auch IMAP
     if (currentFolder == 'inbox') {
       try {
         await http
             .get(
               Uri.parse('$apiUrl/imap/sync'),
-              headers: {'Bypass-Tunnel-Reminder': 'true'},
+              headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
             )
             .timeout(const Duration(seconds: 15));
       } catch (_) {}
@@ -88,6 +92,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> _deleteEmail(int id, int index) async {
+    final token = await AuthService().getToken();
     final deletedEmail = emails[index];
     setState(() {
       emails.removeAt(index);
@@ -96,7 +101,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
     try {
       final response = await http.delete(
         Uri.parse('$apiUrl/emails/$id'),
-        headers: {'Bypass-Tunnel-Reminder': 'true'},
+        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
         fetchFolderCounts();
@@ -116,6 +121,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> _archiveEmail(int id, int index) async {
+    final token = await AuthService().getToken();
     final archivedEmail = emails[index];
     setState(() {
       emails.removeAt(index);
@@ -128,6 +134,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Bypass-Tunnel-Reminder': 'true',
+          'Authorization': 'Bearer $token',
         },
         body: json.encode({'folder': 'archive'}),
       );
@@ -154,6 +161,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
   }
 
   Future<void> _markAsRead(int id, int index) async {
+    final token = await AuthService().getToken();
     if (emails[index]['isRead'] == true) return;
 
     setState(() {
@@ -163,7 +171,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
     try {
       await http.patch(
         Uri.parse('$apiUrl/emails/$id/read'),
-        headers: {'Bypass-Tunnel-Reminder': 'true'},
+        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       fetchFolderCounts();
     } catch (e) {

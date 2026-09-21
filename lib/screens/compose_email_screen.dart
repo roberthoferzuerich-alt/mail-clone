@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../main.dart';
+import '../services/auth_service.dart';
 
 class ComposeEmailScreen extends StatefulWidget {
   final String? initialTo;
@@ -82,6 +83,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   }
 
   Future<void> _sendEmail() async {
+    final token = await AuthService().getToken();
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -95,6 +97,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       );
 
       request.headers['Bypass-Tunnel-Reminder'] = 'true';
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
       request.fields['sender'] = _toController.text;
       request.fields['subject'] = _subjectController.text;
       request.fields['body'] = _bodyController.text;
