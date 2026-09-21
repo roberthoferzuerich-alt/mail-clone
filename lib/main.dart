@@ -794,6 +794,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
   final _bodyController = TextEditingController();
 
   bool isSending = false;
+  bool isPreviewMode = false;
 
   void _insertMarkdown(String prefix, [String suffix = '']) {
     final text = _bodyController.text;
@@ -881,6 +882,15 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
         title: const Text('Neue Nachricht'),
         actions: [
           IconButton(
+            icon: Icon(isPreviewMode ? Icons.edit : Icons.remove_red_eye),
+            tooltip: isPreviewMode ? 'Bearbeiten' : 'Vorschau',
+            onPressed: () {
+              setState(() {
+                isPreviewMode = !isPreviewMode;
+              });
+            },
+          ),
+          IconButton(
             icon: isSending
                 ? const SizedBox(
                     width: 20,
@@ -926,65 +936,84 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
               ),
             ),
             const Divider(height: 1),
-            Container(
-              color: Colors.grey.shade100,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8.0,
-                vertical: 4.0,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.format_bold, color: Colors.black54),
-                    onPressed: () => _insertMarkdown('**', '**'),
-                    tooltip: 'Fett',
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.format_italic,
-                      color: Colors.black54,
+            if (!isPreviewMode) ...[
+              Container(
+                color: Colors.grey.shade100,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.format_bold, color: Colors.black54),
+                      onPressed: () => _insertMarkdown('**', '**'),
+                      tooltip: 'Fett',
                     ),
-                    onPressed: () => _insertMarkdown('*', '*'),
-                    tooltip: 'Kursiv',
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.format_list_bulleted,
-                      color: Colors.black54,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.format_italic,
+                        color: Colors.black54,
+                      ),
+                      onPressed: () => _insertMarkdown('*', '*'),
+                      tooltip: 'Kursiv',
                     ),
-                    onPressed: () => _insertMarkdown('- '),
-                    tooltip: 'Liste',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.code, color: Colors.black54),
-                    onPressed: () => _insertMarkdown('`', '`'),
-                    tooltip: 'Code',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.link, color: Colors.black54),
-                    onPressed: () => _insertMarkdown('[', '](url)'),
-                    tooltip: 'Link',
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextFormField(
-                  controller: _bodyController,
-                  decoration: const InputDecoration(
-                    hintText: 'Nachricht schreiben (Markdown unterstützt)',
-                    border: InputBorder.none,
-                  ),
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Nachricht darf nicht leer sein' : null,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.format_list_bulleted,
+                        color: Colors.black54,
+                      ),
+                      onPressed: () => _insertMarkdown('- '),
+                      tooltip: 'Liste',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.code, color: Colors.black54),
+                      onPressed: () => _insertMarkdown('`', '`'),
+                      tooltip: 'Code',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.link, color: Colors.black54),
+                      onPressed: () => _insertMarkdown('[', '](url)'),
+                      tooltip: 'Link',
+                    ),
+                  ],
                 ),
               ),
+              const Divider(height: 1),
+            ],
+            Expanded(
+              child: isPreviewMode
+                  ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16.0),
+                      color: Colors.grey.shade50,
+                      child: SingleChildScrollView(
+                        child: MarkdownBody(
+                          data: _bodyController.text.isEmpty
+                              ? '*Kein Text eingegeben*'
+                              : _bodyController.text,
+                          styleSheet: MarkdownStyleSheet(
+                            p: const TextStyle(fontSize: 16, height: 1.5),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextFormField(
+                        controller: _bodyController,
+                        decoration: const InputDecoration(
+                          hintText: 'Nachricht schreiben (Markdown unterstützt)',
+                          border: InputBorder.none,
+                        ),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        validator: (value) => value!.isEmpty
+                            ? 'Nachricht darf nicht leer sein'
+                            : null,
+                      ),
+                    ),
             ),
           ],
         ),
