@@ -21,6 +21,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
   final _smtpPortController = TextEditingController(text: '587');
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
   final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
 
   @override
@@ -29,9 +30,11 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     if (widget.existingAccount != null) {
       _emailController.text = widget.existingAccount!['email'] ?? '';
       _imapHostController.text = widget.existingAccount!['imap_host'] ?? '';
-      _imapPortController.text = widget.existingAccount!['imap_port']?.toString() ?? '993';
+      _imapPortController.text =
+          widget.existingAccount!['imap_port']?.toString() ?? '993';
       _smtpHostController.text = widget.existingAccount!['smtp_host'] ?? '';
-      _smtpPortController.text = widget.existingAccount!['smtp_port']?.toString() ?? '587';
+      _smtpPortController.text =
+          widget.existingAccount!['smtp_port']?.toString() ?? '587';
     }
   }
 
@@ -43,10 +46,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
     try {
       final isEdit = widget.existingAccount != null;
-      final url = isEdit 
-          ? '$apiUrl/mail-accounts/${widget.existingAccount!['id']}' 
+      final url = isEdit
+          ? '$apiUrl/mail-accounts/${widget.existingAccount!['id']}'
           : '$apiUrl/mail-accounts';
-          
+
       final Map<String, dynamic> bodyData = {
         'email': _emailController.text,
         'imap_host': _imapHostController.text,
@@ -59,32 +62,36 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         bodyData['password'] = _passwordController.text;
       }
 
-      final response = isEdit 
-        ? await http.put(
-            Uri.parse(url),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-              'Bypass-Tunnel-Reminder': 'true',
-            },
-            body: jsonEncode(bodyData),
-          )
-        : await http.post(
-            Uri.parse(url),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-              'Bypass-Tunnel-Reminder': 'true',
-            },
-            body: jsonEncode(bodyData),
-          );
+      final response = isEdit
+          ? await http.put(
+              Uri.parse(url),
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Bearer $token',
+                'Bypass-Tunnel-Reminder': 'true',
+              },
+              body: jsonEncode(bodyData),
+            )
+          : await http.post(
+              Uri.parse(url),
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Bearer $token',
+                'Bypass-Tunnel-Reminder': 'true',
+              },
+              body: jsonEncode(bodyData),
+            );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(isEdit ? 'Konto aktualisiert!' : 'Konto hinzugefügt!')),
+            SnackBar(
+              content: Text(
+                isEdit ? 'Konto aktualisiert!' : 'Konto hinzugefügt!',
+              ),
+            ),
           );
           Navigator.pop(context, true);
         }
@@ -97,15 +104,15 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Netzwerkfehler')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Netzwerkfehler')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-  
+
   Future<void> _deleteAccount() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -113,16 +120,22 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         title: const Text('Konto löschen?'),
         content: const Text('Möchtest du dieses Konto wirklich entfernen?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Abbrechen'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Löschen', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
     if (confirm != true) return;
-    
+
     setState(() => _isLoading = true);
     final token = await AuthService().getToken();
-    
+
     try {
       final response = await http.delete(
         Uri.parse('$apiUrl/mail-accounts/${widget.existingAccount!['id']}'),
@@ -136,7 +149,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-       // ignore
+      // ignore
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -150,10 +163,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         title: Text(isEdit ? 'Konto bearbeiten' : 'Konto hinzufügen'),
         actions: [
           if (isEdit)
-             IconButton(
-               icon: const Icon(Icons.delete_outline),
-               onPressed: _deleteAccount,
-             )
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _deleteAccount,
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -170,7 +183,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'E-Mail Adresse', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'E-Mail Adresse',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (v) => v!.isEmpty ? 'Pflichtfeld' : null,
               ),
               const SizedBox(height: 16),
@@ -179,13 +195,27 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                 decoration: InputDecoration(
                   labelText: isEdit ? 'Neues Passwort (leer lassen für keine Änderung)' : 'Passwort / App-Passwort', 
                   border: const OutlineInputBorder(),
-                  helperText: 'Bei Google bitte ein App-Passwort nutzen'
+                  helperText: 'Bei Google bitte ein App-Passwort nutzen',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscurePassword,
                 validator: (v) => (!isEdit && v!.isEmpty) ? 'Pflichtfeld' : null,
               ),
               const SizedBox(height: 24),
-              const Text('Posteingang (IMAP)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Posteingang (IMAP)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -193,7 +223,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     flex: 3,
                     child: TextFormField(
                       controller: _imapHostController,
-                      decoration: const InputDecoration(labelText: 'Server (z.B. imap.gmail.com)', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Server (z.B. imap.gmail.com)',
+                        border: OutlineInputBorder(),
+                      ),
                       validator: (v) => v!.isEmpty ? 'Pflichtfeld' : null,
                     ),
                   ),
@@ -202,14 +235,20 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     flex: 1,
                     child: TextFormField(
                       controller: _imapPortController,
-                      decoration: const InputDecoration(labelText: 'Port', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Port',
+                        border: OutlineInputBorder(),
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              const Text('Postausgang (SMTP)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Postausgang (SMTP)',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -217,7 +256,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     flex: 3,
                     child: TextFormField(
                       controller: _smtpHostController,
-                      decoration: const InputDecoration(labelText: 'Server (z.B. smtp.gmail.com)', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Server (z.B. smtp.gmail.com)',
+                        border: OutlineInputBorder(),
+                      ),
                       validator: (v) => v!.isEmpty ? 'Pflichtfeld' : null,
                     ),
                   ),
@@ -226,7 +268,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                     flex: 1,
                     child: TextFormField(
                       controller: _smtpPortController,
-                      decoration: const InputDecoration(labelText: 'Port', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Port',
+                        border: OutlineInputBorder(),
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -242,7 +287,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                 onPressed: _isLoading ? null : _saveAccount,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Konto speichern', style: TextStyle(fontSize: 16)),
+                    : const Text(
+                        'Konto speichern',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ],
           ),
