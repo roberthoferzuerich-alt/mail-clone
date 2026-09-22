@@ -5,12 +5,18 @@ import '../screens/settings_screen.dart';
 class MailDrawer extends StatelessWidget {
   final String currentFolder;
   final Map<String, int> unreadCounts;
+  final List<dynamic>? accounts;
+  final Map<String, dynamic>? selectedAccount;
+  final Function(Map<String, dynamic>)? onAccountSelected;
   final Function(String) onFolderSelected;
 
   const MailDrawer({
     super.key,
     required this.currentFolder,
     required this.unreadCounts,
+    this.accounts,
+    this.selectedAccount,
+    this.onAccountSelected,
     required this.onFolderSelected,
   });
 
@@ -82,16 +88,38 @@ class MailDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   const SizedBox(height: 40),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, bottom: 16),
-                    child: Text(
-                      'Alle Konten',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                  if (accounts != null && accounts!.isNotEmpty)
+                    ExpansionTile(
+                      title: Text(
+                        selectedAccount != null ? selectedAccount!['email'] : 'Konto auswählen',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      children: accounts!.map((acc) {
+                        return ListTile(
+                          title: Text(acc['email']),
+                          onTap: () {
+                            if (onAccountSelected != null) {
+                              onAccountSelected!(acc);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, bottom: 16),
+                      child: Text(
+                        'Keine Konten',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
-                  ),
                   _buildDrawerItem(
                     context,
                     Icons.inbox,

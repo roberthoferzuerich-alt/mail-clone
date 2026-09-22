@@ -10,12 +10,14 @@ class ComposeEmailScreen extends StatefulWidget {
   final String? initialTo;
   final String? initialSubject;
   final String? initialBody;
+  final int? accountId;
 
   const ComposeEmailScreen({
     super.key,
     this.initialTo,
     this.initialSubject,
     this.initialBody,
+    this.accountId,
   });
 
   @override
@@ -102,6 +104,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
       request.fields['sender'] = _toController.text;
       request.fields['subject'] = _subjectController.text;
       request.fields['body'] = _bodyController.text;
+      if (widget.accountId != null) {
+          request.fields['account_id'] = widget.accountId.toString();
+      }
 
       for (var file in attachedFiles) {
         if (file.path != null) {

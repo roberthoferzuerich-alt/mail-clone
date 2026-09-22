@@ -5,8 +5,9 @@ import 'compose_email_screen.dart';
 
 class EmailDetailScreen extends StatelessWidget {
   final Map<String, dynamic> email;
+  final int? accountId;
 
-  const EmailDetailScreen({super.key, required this.email});
+  const EmailDetailScreen({super.key, required this.email, this.accountId});
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +198,7 @@ class EmailDetailScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => ComposeEmailScreen(
+                        accountId: accountId,
           initialTo: forward ? '' : sender,
           initialSubject: subject,
           initialBody: quotedBody,

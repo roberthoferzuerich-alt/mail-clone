@@ -49,7 +49,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
   void _openAddOrEdit([Map<String, dynamic>? account]) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddAccountScreen(existingAccount: account)),
+      MaterialPageRoute(
+        builder: (context) => AddAccountScreen(existingAccount: account),
+      ),
     );
     if (result == true) {
       _fetchAccounts();
@@ -67,7 +69,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
             onPressed: () {
               // Maybe toggle edit mode, but for now we just edit on tap
             },
-          )
+          ),
         ],
       ),
       body: isLoading
@@ -75,11 +77,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
           : ListView(
               children: [
                 ...accounts.map((acc) {
-                  final isGmail = acc['email'].toString().toLowerCase().contains('gmail.com');
+                  final isGmail = acc['email']
+                      .toString()
+                      .toLowerCase()
+                      .contains('gmail.com');
                   return ListTile(
-                    leading: isGmail 
-                      ? const Icon(Icons.g_mobiledata, size: 40, color: Colors.red) // Approximation of Google logo
-                      : const Icon(Icons.mail_outline),
+                    leading: isGmail
+                        ? const Icon(
+                            Icons.g_mobiledata,
+                            size: 40,
+                            color: Colors.red,
+                          ) // Approximation of Google logo
+                        : const Icon(Icons.mail_outline),
                     title: Text(isGmail ? 'Google' : 'IMAP'),
                     subtitle: Text(acc['email']),
                     onTap: () => _openAddOrEdit(acc),

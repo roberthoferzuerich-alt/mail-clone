@@ -22,12 +22,29 @@ class _EmailListScreenState extends State<EmailListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   Map<String, int> unreadCounts = {};
+  List<dynamic> accounts = [];
+  Map<String, dynamic>? selectedAccount;
 
   final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
 
   @override
   void initState() {
     super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final token = await AuthService().getToken();
+    try {
+      final response = await http.get(Uri.parse('$apiUrl/mail-accounts'), headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token', 'Bypass-Tunnel-Reminder': 'true'});
+      if (response.statusCode == 200) {
+        final accs = jsonDecode(response.body) as List;
+        if (accs.isNotEmpty) {
+           accounts = accs;
+           selectedAccount = accs[0];
+        }
+      }
+    } catch (_) {}
     fetchEmails();
     fetchFolderCounts();
   }
@@ -36,7 +53,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
     final token = await AuthService().getToken();
     try {
       final response = await http.get(
-        Uri.parse('$apiUrl/emails/counts'),
+        Uri.parse('$apiUrl/emails/counts${selectedAccount != null ? '?account_id=${selectedAccount!['id']}' : ''}'),
         headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -57,7 +74,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse('$apiUrl/emails?folder=$currentFolder&search=$searchQuery'),
+        Uri.parse('$apiUrl/emails?folder=$currentFolder&search=$searchQuery${selectedAccount != null ? '&account_id=${selectedAccount!['id']}' : ''}'),
         headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -253,6 +270,16 @@ class _EmailListScreenState extends State<EmailListScreen> {
       drawer: MailDrawer(
         currentFolder: currentFolder,
         unreadCounts: unreadCounts,
+        accounts: accounts,
+        selectedAccount: selectedAccount,
+        onAccountSelected: (acc) {
+          setState(() {
+             selectedAccount = acc;
+             currentFolder = 'inbox';
+          });
+          fetchEmails();
+          fetchFolderCounts();
+        },
         onFolderSelected: (folder) {
           setState(() {
             currentFolder = folder;
@@ -466,8 +493,12 @@ class _EmailListScreenState extends State<EmailListScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      EmailDetailScreen(email: email),
+                                  builder: (context) => EmailDetailScreen(
+                                    email: email,
+                                    accountId: selectedAccount != null
+                                        ? selectedAccount!['id']
+                                        : null,
+                                  ),
                                 ),
                               );
                             },

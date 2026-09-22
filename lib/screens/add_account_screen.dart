@@ -193,12 +193,16 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
-                  labelText: isEdit ? 'Neues Passwort (leer lassen für keine Änderung)' : 'Passwort / App-Passwort', 
+                  labelText: isEdit
+                      ? 'Neues Passwort (leer lassen für keine Änderung)'
+                      : 'Passwort / App-Passwort',
                   border: const OutlineInputBorder(),
                   helperText: 'Bei Google bitte ein App-Passwort nutzen',
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -209,7 +213,8 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                   ),
                 ),
                 obscureText: _obscurePassword,
-                validator: (v) => (!isEdit && v!.isEmpty) ? 'Pflichtfeld' : null,
+                validator: (v) =>
+                    (!isEdit && v!.isEmpty) ? 'Pflichtfeld' : null,
               ),
               const SizedBox(height: 24),
               const Text(
