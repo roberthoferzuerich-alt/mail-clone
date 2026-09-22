@@ -46,39 +46,56 @@ class _AccountsScreenState extends State<AccountsScreen> {
     }
   }
 
+  void _openAddOrEdit([Map<String, dynamic>? account]) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddAccountScreen(existingAccount: account)),
+    );
+    if (result == true) {
+      _fetchAccounts();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('E-Mail-Konten')),
+      appBar: AppBar(
+        title: const Text('Konten'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {
+              // Maybe toggle edit mode, but for now we just edit on tap
+            },
+          )
+        ],
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : accounts.isEmpty
-              ? const Center(child: Text('Noch keine Konten hinterlegt.'))
-              : ListView.builder(
-                  itemCount: accounts.length,
-                  itemBuilder: (context, index) {
-                    final acc = accounts[index];
-                    return ListTile(
-                      leading: const Icon(Icons.email, color: Color(0xFF0078D4)),
-                      title: Text(acc['email']),
-                      subtitle: Text('IMAP: ${acc['imap_host']} | SMTP: ${acc['smtp_host']}'),
-                    );
-                  },
+          : ListView(
+              children: [
+                ...accounts.map((acc) {
+                  final isGmail = acc['email'].toString().toLowerCase().contains('gmail.com');
+                  return ListTile(
+                    leading: isGmail 
+                      ? const Icon(Icons.g_mobiledata, size: 40, color: Colors.red) // Approximation of Google logo
+                      : const Icon(Icons.mail_outline),
+                    title: Text(isGmail ? 'Google' : 'IMAP'),
+                    subtitle: Text(acc['email']),
+                    onTap: () => _openAddOrEdit(acc),
+                  );
+                }),
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text('Konto hinzufügen'),
+                  onTap: () => _openAddOrEdit(),
                 ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF0078D4),
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddAccountScreen()),
-          );
-          if (result == true) {
-            _fetchAccounts();
-          }
-        },
-      ),
+                ListTile(
+                  title: const Text('Neues Konto erstellen'),
+                  onTap: () {},
+                ),
+              ],
+            ),
     );
   }
 }
