@@ -36,12 +36,19 @@ class _EmailListScreenState extends State<EmailListScreen> {
   Future<void> _loadInitialData() async {
     final token = await AuthService().getToken();
     try {
-      final response = await http.get(Uri.parse('$apiUrl/mail-accounts'), headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token', 'Bypass-Tunnel-Reminder': 'true'});
+      final response = await http.get(
+        Uri.parse('$apiUrl/mail-accounts'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Bypass-Tunnel-Reminder': 'true',
+        },
+      );
       if (response.statusCode == 200) {
         final accs = jsonDecode(response.body) as List;
         if (accs.isNotEmpty) {
-           accounts = accs;
-           selectedAccount = accs[0];
+          accounts = accs;
+          selectedAccount = accs[0];
         }
       }
     } catch (_) {}
@@ -53,8 +60,14 @@ class _EmailListScreenState extends State<EmailListScreen> {
     final token = await AuthService().getToken();
     try {
       final response = await http.get(
-        Uri.parse('$apiUrl/emails/counts${selectedAccount != null ? '?account_id=${selectedAccount!['id']}' : ''}'),
-        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        Uri.parse(
+          '$apiUrl/emails/counts${selectedAccount != null ? '?account_id=${selectedAccount!['id']}' : ''}',
+        ),
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -74,8 +87,14 @@ class _EmailListScreenState extends State<EmailListScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse('$apiUrl/emails?folder=$currentFolder&search=$searchQuery${selectedAccount != null ? '&account_id=${selectedAccount!['id']}' : ''}'),
-        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        Uri.parse(
+          '$apiUrl/emails?folder=$currentFolder&search=$searchQuery${selectedAccount != null ? '&account_id=${selectedAccount!['id']}' : ''}',
+        ),
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
       if (response.statusCode == 200) {
         setState(() {
@@ -97,10 +116,17 @@ class _EmailListScreenState extends State<EmailListScreen> {
     // Wenn wir in "inbox" sind, synce auch IMAP
     if (currentFolder == 'inbox') {
       try {
+        final imapUrl = selectedAccount != null 
+          ? '$apiUrl/imap/sync?account_id=${selectedAccount!['id']}' 
+          : '$apiUrl/imap/sync';
         await http
             .get(
-              Uri.parse('$apiUrl/imap/sync'),
-              headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+              Uri.parse(imapUrl),
+              headers: {
+                'Bypass-Tunnel-Reminder': 'true',
+                'Authorization': 'Bearer $token',
+                'Accept': 'application/json',
+              },
             )
             .timeout(const Duration(seconds: 15));
       } catch (_) {}
@@ -118,7 +144,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
     try {
       final response = await http.delete(
         Uri.parse('$apiUrl/emails/$id'),
-        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
       if (response.statusCode == 200) {
         fetchFolderCounts();
@@ -188,7 +218,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
     try {
       await http.patch(
         Uri.parse('$apiUrl/emails/$id/read'),
-        headers: {'Bypass-Tunnel-Reminder': 'true', 'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
       );
       fetchFolderCounts();
     } catch (e) {
@@ -274,8 +308,8 @@ class _EmailListScreenState extends State<EmailListScreen> {
         selectedAccount: selectedAccount,
         onAccountSelected: (acc) {
           setState(() {
-             selectedAccount = acc;
-             currentFolder = 'inbox';
+            selectedAccount = acc;
+            currentFolder = 'inbox';
           });
           fetchEmails();
           fetchFolderCounts();
