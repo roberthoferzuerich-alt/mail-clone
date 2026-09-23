@@ -91,3 +91,4 @@ class MailDrawer extends StatelessWidget {
 
 update_drawer()
 print("Updated mail drawer")
+

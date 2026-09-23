@@ -25,3 +25,4 @@ def update_detail():
 
 update_detail()
 print("Updated email detail")
+

@@ -1,37 +1,63 @@
-import 'package:flutter/material.dart';
-import '../main.dart';
-import '../screens/settings_screen.dart';
+import re
 
-class MailDrawer extends StatelessWidget {
-  final String currentFolder;
-  final Map<String, int> unreadCounts;
-  final List<dynamic>? accounts;
-  final Map<String, dynamic>? selectedAccount;
-  final Function(Map<String, dynamic>)? onAccountSelected;
-  final Function(String) onFolderSelected;
+def rewrite_drawer():
+    with open('lib/widgets/mail_drawer.dart', 'r', encoding='utf-8') as f:
+        content = f.read()
 
-  const MailDrawer({
-    super.key,
-    required this.currentFolder,
-    required this.unreadCounts,
-    this.accounts,
-    this.selectedAccount,
-    this.onAccountSelected,
-    required this.onFolderSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Drawer(
-      child: Row(
-        children: [
-          // Schmale linke Leiste
-          Material(
-            color: isDark ? Colors.black54 : Colors.grey.shade100,
-            child: SizedBox(
-              width: 70,
+    # We need to replace the entire left column content
+    # And replace the right column header
+    
+    # Left column replacement:
+    old_left_col = """
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  CircleAvatar(
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+                    radius: 24,
+                    child: Icon(
+                      Icons.home,
+                      color: isDark ? Colors.white : outlookBlue,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.orange.shade300,
+                    child: const Text(
+                      'RH',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Icon(Icons.email_outlined, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Icon(Icons.add, color: Colors.grey),
+                  const Spacer(),
+                  const Icon(Icons.help_outline, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+"""
+    
+    new_left_col = """
               child: Column(
                 children: [
                   const SizedBox(height: 40),
@@ -68,11 +94,10 @@ class MailDrawer extends StatelessWidget {
                           },
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor: isGmail ? Colors.red : Colors.blue.shade800,
-                            child: Text(
-                              isGmail ? 'G' : email.split('@').last[0].toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-                            ),
+                            backgroundColor: isGmail ? Colors.red : Colors.blue,
+                            child: isGmail 
+                                ? const Icon(Icons.g_mobiledata, color: Colors.white, size: 30)
+                                : const Icon(Icons.email, color: Colors.white, size: 20),
                           ),
                         ),
                       );
@@ -110,22 +135,17 @@ class MailDrawer extends StatelessWidget {
                   const SizedBox(height: 16),
                 ],
               ),
-            ),
-          ),
-          // Breiter rechter Bereich
-          Expanded(
-            child: Material(
-              color: Theme.of(context).cardColor,
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  const SizedBox(height: 40),
+"""
+
+    if "const Icon(Icons.help_outline, color: Colors.grey)," in content:
+        content = content.replace(old_left_col.strip(), new_left_col.strip())
+
+    # Right column header replacement
+    old_right_header = """
                   if (accounts != null && accounts!.isNotEmpty)
                     ExpansionTile(
                       title: Text(
-                        selectedAccount != null
-                            ? selectedAccount!['email']
-                            : 'Konto auswählen',
+                        selectedAccount != null ? selectedAccount!['email'] : 'Konto auswählen',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -155,91 +175,26 @@ class MailDrawer extends StatelessWidget {
                         ),
                       ),
                     ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.inbox,
-                    'Posteingang',
-                    'inbox',
+"""
+    new_right_header = """
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 16),
+                    child: Text(
+                      selectedAccount != null ? selectedAccount!['email'] : 'Posteingang',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
                   ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.edit_outlined,
-                    'Entwürfe',
-                    'drafts',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.inventory_2_outlined,
-                    'Archiv',
-                    'archive',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.send_outlined,
-                    'Gesendet',
-                    'sent',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.delete_outline,
-                    'Gelöscht',
-                    'trash',
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.folder_off_outlined,
-                    'Junk-E-Mail',
-                    'junk',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+"""
+    if "ExpansionTile(" in content:
+        content = content.replace(old_right_header.strip(), new_right_header.strip())
 
-  Widget _buildDrawerItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String folder,
-  ) {
-    final isSelected = currentFolder == folder;
-    final count = unreadCounts[folder] ?? 0;
-    final badge = count > 0 ? count.toString() : '';
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? outlookBlue : Colors.grey),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? outlookBlue : null,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      trailing: badge.isNotEmpty
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? outlookBlue.withOpacity(0.2)
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                badge,
-                style: TextStyle(
-                  color: isSelected ? outlookBlue : Colors.black54,
-                  fontSize: 12,
-                ),
-              ),
-            )
-          : null,
-      onTap: () {
-        Navigator.pop(context);
-        onFolderSelected(folder);
-      },
-    );
-  }
-}
+    with open('lib/widgets/mail_drawer.dart', 'w', encoding='utf-8') as f:
+        f.write(content)
+
+rewrite_drawer()
+print("Updated MailDrawer")
+

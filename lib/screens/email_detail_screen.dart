@@ -198,7 +198,7 @@ class EmailDetailScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => ComposeEmailScreen(
-                        accountId: accountId,
+          accountId: accountId,
           initialTo: forward ? '' : sender,
           initialSubject: subject,
           initialBody: quotedBody,
