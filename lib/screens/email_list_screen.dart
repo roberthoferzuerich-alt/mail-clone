@@ -452,6 +452,23 @@ class _EmailListScreenState extends State<EmailListScreen> {
           fetchEmails();
         },
       ),
+      
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ComposeEmailScreen(
+                accountId: selectedAccount?['id'],
+              ),
+            ),
+          );
+          fetchEmails(); // Reload after sending
+        },
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+        elevation: 4,
+        child: const Icon(Icons.edit, color: Color(0xFF0078D4)), // outlookBlue
+      ),
       body: Column(
         children: [
           // Filter / Tabs Row
