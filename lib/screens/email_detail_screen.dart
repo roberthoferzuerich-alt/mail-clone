@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import '../main.dart';
 import 'compose_email_screen.dart';
 
@@ -99,19 +99,21 @@ class EmailDetailScreen extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 16),
             ],
-            Html(
-              data: email['body'],
-              style: {
-                "body": Style(
-                  fontSize: FontSize(16.0),
-                  lineHeight: LineHeight(1.5),
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-                "a": Style(
-                  color: outlookBlue,
-                ),
+HtmlWidget(
+              email['body']?.toString() ?? '',
+              textStyle: TextStyle(
+                fontSize: 16.0,
+                color: isDark ? Colors.white : Colors.black87,
+                height: 1.5,
+              ),
+              customStylesBuilder: (element) {
+                if (element.classes.contains('a')) {
+                  return {'color': 'blue'};
+                }
+                return null;
               },
             ),
+
           ],
         ),
       ),
