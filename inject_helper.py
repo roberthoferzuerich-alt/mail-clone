@@ -34,3 +34,4 @@ def inject():
         print("Injected helper")
 
 inject()
+

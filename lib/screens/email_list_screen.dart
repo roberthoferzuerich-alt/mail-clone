@@ -5,6 +5,7 @@ import '../widgets/mail_drawer.dart';
 import 'email_detail_screen.dart';
 import 'compose_email_screen.dart';
 import '../main.dart';
+import '../services/database_service.dart';
 import '../services/auth_service.dart'; // for apiUrl, outlookBlue
 
 class EmailListScreen extends StatefulWidget {
@@ -84,9 +85,23 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   Future<void> fetchEmails() async {
     final token = await AuthService().getToken();
-    setState(() {
-      isLoading = true;
-    });
+    
+    // 1. Lokale Mails sofort laden (wenn ein Konto ausgewÃ¤hlt ist und nicht gesucht wird)
+    if (selectedAccount != null && searchQuery.isEmpty) {
+      final localEmails = await DatabaseService().getEmails(selectedAccount!['id'], currentFolder);
+      if (localEmails.isNotEmpty) {
+        setState(() {
+          emails = localEmails;
+          isLoading = false;
+        });
+      } else {
+        setState(() { isLoading = true; });
+      }
+    } else {
+      setState(() { isLoading = true; });
+    }
+
+    // 2. Im Hintergrund vom Server holen
     try {
       final response = await http.get(
         Uri.parse(
@@ -98,18 +113,34 @@ class _EmailListScreenState extends State<EmailListScreen> {
           'Accept': 'application/json',
         },
       );
+      
       if (response.statusCode == 200) {
-        setState(() {
-          emails = json.decode(response.body);
-          isLoading = false;
-        });
+        final List<dynamic> serverEmails = json.decode(response.body);
+        
+        // Lokal cachen, wenn es keine Suche ist
+        if (selectedAccount != null && searchQuery.isEmpty) {
+          // FÃ¼ge die account_id zu den Mails hinzu, falls sie fehlt
+          for (var e in serverEmails) {
+            e['mail_account_id'] = selectedAccount!['id'];
+          }
+          await DatabaseService().saveEmails(serverEmails);
+        }
+        
+        if (mounted) {
+          setState(() {
+            emails = serverEmails;
+            isLoading = false;
+          });
+        }
       } else {
         throw Exception('Fehler beim Laden der E-Mails');
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -138,9 +169,13 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   Future<void> _deleteEmail(int id, int index) async {
     final token = await AuthService().getToken();
-    final deletedEmail = emails.firstWhere((e) => e['id'] == id, orElse: () => null);
+    final deletedEmail = emails.firstWhere(
+      (e) => e['id'] == id,
+      orElse: () => null,
+    );
     setState(() {
       emails.removeWhere((e) => e['id'] == id);
+      DatabaseService().deleteEmail(id);
     });
 
     try {
@@ -171,9 +206,13 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   Future<void> _archiveEmail(int id, int index) async {
     final token = await AuthService().getToken();
-    final archivedEmail = emails.firstWhere((e) => e['id'] == id, orElse: () => null);
+    final archivedEmail = emails.firstWhere(
+      (e) => e['id'] == id,
+      orElse: () => null,
+    );
     setState(() {
       emails.removeWhere((e) => e['id'] == id);
+      DatabaseService().deleteEmail(id);
     });
 
     try {
@@ -232,33 +271,42 @@ class _EmailListScreenState extends State<EmailListScreen> {
     }
   }
 
-
   List<dynamic> get displayedEmails {
     return emails.where((email) {
       final sender = (email['sender'] ?? '').toLowerCase();
-      final isNewsletter = sender.contains('newsletter') || 
-                           sender.contains('noreply') || 
-                           sender.contains('no-reply') || 
-                           sender.contains('marketing') || 
-                           sender.contains('info@') ||
-                           sender.contains('news@');
-      
+      final isNewsletter =
+          sender.contains('newsletter') ||
+          sender.contains('noreply') ||
+          sender.contains('no-reply') ||
+          sender.contains('marketing') ||
+          sender.contains('info@') ||
+          sender.contains('news@');
+
       bool matchesTabs = showRelevant ? !isNewsletter : isNewsletter;
       if (!matchesTabs) return false;
 
       if (currentFilter == 'Ungelesen') {
-        final isRead = email['is_read'] == 1 || email['is_read'] == true || email['is_read'] == '1';
+        final isRead =
+            email['is_read'] == 1 ||
+            email['is_read'] == true ||
+            email['is_read'] == '1';
         if (isRead) return false;
       } else if (currentFilter == 'Mit Dateien') {
-        final hasAttachments = email['attachments'] != null && (email['attachments'] as List).isNotEmpty;
+        final hasAttachments =
+            email['attachments'] != null &&
+            (email['attachments'] as List).isNotEmpty;
         if (!hasAttachments) return false;
       }
-      
+
       return true;
     }).toList();
   }
 
-  PopupMenuItem<String> _buildPopupItem(String title, IconData icon, bool isDark) {
+  PopupMenuItem<String> _buildPopupItem(
+    String title,
+    IconData icon,
+    bool isDark,
+  ) {
     return PopupMenuItem<String>(
       value: title,
       child: Row(
@@ -266,7 +314,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: isDark ? Colors.white70 : Colors.grey[700], size: 20),
+              Icon(
+                icon,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(title),
             ],
@@ -274,7 +326,11 @@ class _EmailListScreenState extends State<EmailListScreen> {
           if (currentFilter == title)
             const Icon(Icons.radio_button_checked, color: outlookBlue, size: 20)
           else
-            Icon(Icons.radio_button_unchecked, color: Colors.grey[400], size: 20),
+            Icon(
+              Icons.radio_button_unchecked,
+              color: Colors.grey[400],
+              size: 20,
+            ),
         ],
       ),
     );
@@ -288,26 +344,42 @@ class _EmailListScreenState extends State<EmailListScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-          leading: Builder(
-            builder: (context) {
-              final isGmail = selectedAccount != null && selectedAccount!['email'].toString().toLowerCase().contains('gmail');
-              return IconButton(
-                icon: CircleAvatar(
-                  backgroundColor: selectedAccount == null 
-                      ? (isDark ? Colors.grey[800] : Colors.white) 
-                      : (isGmail ? Colors.red : Colors.blue.shade800),
-                  child: selectedAccount == null 
-                      ? Icon(Icons.home, color: isDark ? Colors.white : outlookBlue)
-                      : Text(
-                          isGmail ? 'G' : selectedAccount!['email'].split('@').last[0].toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+        leading: Builder(
+          builder: (context) {
+            final isGmail =
+                selectedAccount != null &&
+                selectedAccount!['email'].toString().toLowerCase().contains(
+                  'gmail',
+                );
+            return IconButton(
+              icon: CircleAvatar(
+                backgroundColor: selectedAccount == null
+                    ? (isDark ? Colors.grey[800] : Colors.white)
+                    : (isGmail ? Colors.red : Colors.blue.shade800),
+                child: selectedAccount == null
+                    ? Icon(
+                        Icons.home,
+                        color: isDark ? Colors.white : outlookBlue,
+                      )
+                    : Text(
+                        isGmail
+                            ? 'G'
+                            : selectedAccount!['email']
+                                  .split('@')
+                                  .last[0]
+                                  .toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
                         ),
-                ),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              );
-            },
-          ),
-          title: Container(
+                      ),
+              ),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            );
+          },
+        ),
+        title: Container(
           height: 38,
           decoration: BoxDecoration(
             color: isDark ? Colors.grey[800] : Colors.white.withOpacity(0.2),
@@ -387,7 +459,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.2))),
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
+              ),
             ),
             child: Row(
               children: [
@@ -402,14 +476,22 @@ class _EmailListScreenState extends State<EmailListScreen> {
                       Text(
                         'Relevant',
                         style: TextStyle(
-                          fontWeight: showRelevant ? FontWeight.bold : FontWeight.normal,
-                          color: showRelevant ? (isDark ? Colors.white : outlookBlue) : Colors.grey,
+                          fontWeight: showRelevant
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: showRelevant
+                              ? (isDark ? Colors.white : outlookBlue)
+                              : Colors.grey,
                           fontSize: 15,
                         ),
                       ),
                       const SizedBox(height: 4),
                       if (showRelevant)
-                        Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue)
+                        Container(
+                          height: 2,
+                          width: 40,
+                          color: isDark ? Colors.white : outlookBlue,
+                        )
                       else
                         const SizedBox(height: 2),
                     ],
@@ -427,14 +509,22 @@ class _EmailListScreenState extends State<EmailListScreen> {
                       Text(
                         'Sonstige',
                         style: TextStyle(
-                          fontWeight: !showRelevant ? FontWeight.bold : FontWeight.normal,
-                          color: !showRelevant ? (isDark ? Colors.white : outlookBlue) : Colors.grey,
+                          fontWeight: !showRelevant
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: !showRelevant
+                              ? (isDark ? Colors.white : outlookBlue)
+                              : Colors.grey,
                           fontSize: 15,
                         ),
                       ),
                       const SizedBox(height: 4),
                       if (!showRelevant)
-                        Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue)
+                        Container(
+                          height: 2,
+                          width: 40,
+                          color: isDark ? Colors.white : outlookBlue,
+                        )
                       else
                         const SizedBox(height: 2),
                     ],
@@ -449,28 +539,78 @@ class _EmailListScreenState extends State<EmailListScreen> {
                   },
                   position: PopupMenuPosition.under,
                   color: isDark ? Colors.grey[850] : Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.filter_list, size: 18, color: currentFilter != 'Alle Nachrichten' ? outlookBlue : (isDark ? Colors.white : Colors.black87)),
+                      Icon(
+                        Icons.filter_list,
+                        size: 18,
+                        color: currentFilter != 'Alle Nachrichten'
+                            ? outlookBlue
+                            : (isDark ? Colors.white : Colors.black87),
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        currentFilter == 'Alle Nachrichten' ? 'Filter' : currentFilter,
-                        style: TextStyle(color: currentFilter != 'Alle Nachrichten' ? outlookBlue : (isDark ? Colors.white : Colors.black87), fontWeight: currentFilter != 'Alle Nachrichten' ? FontWeight.bold : FontWeight.normal),
+                        currentFilter == 'Alle Nachrichten'
+                            ? 'Filter'
+                            : currentFilter,
+                        style: TextStyle(
+                          color: currentFilter != 'Alle Nachrichten'
+                              ? outlookBlue
+                              : (isDark ? Colors.white : Colors.black87),
+                          fontWeight: currentFilter != 'Alle Nachrichten'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
                     ],
                   ),
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    _buildPopupItem('Alle Nachrichten', Icons.mail_outline, isDark),
-                    _buildPopupItem('Ungelesen', Icons.mark_email_unread_outlined, isDark),
-                    _buildPopupItem('Gekennzeichnet', Icons.flag_outlined, isDark),
-                    _buildPopupItem('Angeheftet', Icons.push_pin_outlined, isDark),
-                    _buildPopupItem('Kategorisiert', Icons.label_outline, isDark),
-                    _buildPopupItem('Für mich', Icons.person_outline, isDark),
-                    _buildPopupItem('Mit Dateien', Icons.attach_file, isDark),
-                    _buildPopupItem('Erwähnt mich', Icons.alternate_email, isDark),
-                    _buildPopupItem('Ereignisse', Icons.event_note, isDark),
-                  ],
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        _buildPopupItem(
+                          'Alle Nachrichten',
+                          Icons.mail_outline,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Ungelesen',
+                          Icons.mark_email_unread_outlined,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Gekennzeichnet',
+                          Icons.flag_outlined,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Angeheftet',
+                          Icons.push_pin_outlined,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Kategorisiert',
+                          Icons.label_outline,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Für mich',
+                          Icons.person_outline,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Mit Dateien',
+                          Icons.attach_file,
+                          isDark,
+                        ),
+                        _buildPopupItem(
+                          'Erwähnt mich',
+                          Icons.alternate_email,
+                          isDark,
+                        ),
+                        _buildPopupItem('Ereignisse', Icons.event_note, isDark),
+                      ],
                 ),
               ],
             ),
@@ -488,7 +628,8 @@ class _EmailListScreenState extends State<EmailListScreen> {
                       ],
                     )
                   : ListView.separated(
-                      itemCount: displayedEmails.length + 1, // +1 für den Header
+                      itemCount:
+                          displayedEmails.length + 1, // +1 für den Header
                       separatorBuilder: (context, index) => const Divider(
                         height: 1,
                         indent: 72,
