@@ -34,22 +34,7 @@ class MailDrawer extends StatelessWidget {
               width: 70,
               child: Column(
                 children: [
-                  const SizedBox(height: 40),
-                  // "Alle Konten" / Home Button
-                  GestureDetector(
-                    onTap: () {},
-                    child: CircleAvatar(
-                      backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-                      radius: 24,
-                      child: Icon(
-                        Icons.home,
-                        color: isDark ? Colors.white : outlookBlue,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
+                  const SizedBox(height: 40),                  
                   // Dynamische Accounts aus der Datenbank
                   if (accounts != null)
                     ...accounts!.map((acc) {
@@ -120,41 +105,17 @@ class MailDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   const SizedBox(height: 40),
-                  if (accounts != null && accounts!.isNotEmpty)
-                    ExpansionTile(
-                      title: Text(
-                        selectedAccount != null
-                            ? selectedAccount!['email']
-                            : 'Konto auswählen',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      children: accounts!.map((acc) {
-                        return ListTile(
-                          title: Text(acc['email']),
-                          onTap: () {
-                            Navigator.pop(context);
-                            if (onAccountSelected != null) {
-                              onAccountSelected!(acc);
-                            }
-                          },
-                        );
-                      }).toList(),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16, bottom: 16),
-                      child: Text(
-                        'Keine Konten',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 16),
+                    child: Text(
+                      selectedAccount != null ? selectedAccount!['email'] : 'Posteingang',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
+                  ),
                   _buildDrawerItem(
                     context,
                     Icons.inbox,

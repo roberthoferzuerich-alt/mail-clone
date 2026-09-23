@@ -69,3 +69,4 @@ def fix_avatars():
 
 fix_avatars()
 print("Fixed avatars")
+
