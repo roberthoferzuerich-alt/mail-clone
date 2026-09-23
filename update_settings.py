@@ -122,3 +122,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
         
 update_settings()
 print("Updated settings screen")
+

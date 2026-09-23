@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_html/flutter_html.dart';
 import '../main.dart';
 import 'compose_email_screen.dart';
 
@@ -99,11 +99,18 @@ class EmailDetailScreen extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 16),
             ],
-            MarkdownBody(
+            Html(
               data: email['body'],
-              styleSheet: MarkdownStyleSheet(
-                p: const TextStyle(fontSize: 16, height: 1.5),
-              ),
+              style: {
+                "body": Style(
+                  fontSize: FontSize(16.0),
+                  lineHeight: LineHeight(1.5),
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                "a": Style(
+                  color: outlookBlue,
+                ),
+              },
             ),
           ],
         ),
@@ -176,6 +183,11 @@ class EmailDetailScreen extends StatelessWidget {
     );
   }
 
+  String _stripHtml(String htmlString) {
+    final RegExp exp = RegExp(r"<[^>]*>", multiLine: true, caseSensitive: true);
+    return htmlString.replaceAll(exp, '');
+  }
+
   void _handleReply(
     BuildContext context,
     Map<String, dynamic> email, {
@@ -190,9 +202,10 @@ class EmailDetailScreen extends StatelessWidget {
               : 'AW: $originalSubject');
 
     final date = _formatDateTime(email['date']);
+    final plainTextBody = _stripHtml(email['body'].toString());
     final quotedBody =
         '\n\n\n--- Ursprüngliche Nachricht ---\nVon: $sender\nDatum: $date\nBetreff: $originalSubject\n\n> ' +
-        email['body'].toString().replaceAll('\n', '\n> ');
+        plainTextBody.replaceAll('\n', '\n> ');
 
     Navigator.push(
       context,

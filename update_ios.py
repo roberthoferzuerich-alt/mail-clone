@@ -30,3 +30,4 @@ def update_ios():
 
 update_ios()
 print("Updated Info.plist")
+
