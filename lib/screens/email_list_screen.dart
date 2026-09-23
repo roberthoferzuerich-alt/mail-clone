@@ -116,9 +116,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
     // Wenn wir in "inbox" sind, synce auch IMAP
     if (currentFolder == 'inbox') {
       try {
-        final imapUrl = selectedAccount != null 
-          ? '$apiUrl/imap/sync?account_id=${selectedAccount!['id']}' 
-          : '$apiUrl/imap/sync';
+        final imapUrl = selectedAccount != null
+            ? '$apiUrl/imap/sync?account_id=${selectedAccount!['id']}'
+            : '$apiUrl/imap/sync';
         await http
             .get(
               Uri.parse(imapUrl),

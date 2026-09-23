@@ -35,43 +35,74 @@ class MailDrawer extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  CircleAvatar(
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-                    radius: 24,
-                    child: Icon(
-                      Icons.home,
-                      color: isDark ? Colors.white : outlookBlue,
-                      size: 28,
+                  // "Alle Konten" / Home Button
+                  GestureDetector(
+                    onTap: () {},
+                    child: CircleAvatar(
+                      backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+                      radius: 24,
+                      child: Icon(
+                        Icons.home,
+                        color: isDark ? Colors.white : outlookBlue,
+                        size: 28,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.orange.shade300,
-                    child: const Text(
-                      'RH',
-                      style: TextStyle(color: Colors.white),
+                  
+                  // Dynamische Accounts aus der Datenbank
+                  if (accounts != null)
+                    ...accounts!.map((acc) {
+                      final isSelected = selectedAccount != null && selectedAccount!['id'] == acc['id'];
+                      final email = acc['email'].toString().toLowerCase();
+                      final isGmail = email.contains('gmail');
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context); // Drawer schließen
+                            if (onAccountSelected != null) {
+                              onAccountSelected!(acc);
+                            }
+                          },
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: isGmail ? Colors.red : Colors.blue,
+                            child: isGmail 
+                                ? const Icon(Icons.g_mobiledata, color: Colors.white, size: 30)
+                                : const Icon(Icons.email, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  
+                  // Konto hinzufügen
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      );
+                    },
+                    child: const CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.transparent,
+                      child: Icon(Icons.add, color: Colors.grey),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Icon(Icons.email_outlined, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Icon(Icons.add, color: Colors.grey),
+                  
                   const Spacer(),
                   const Icon(Icons.help_outline, color: Colors.grey),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.grey,
-                    ),
+                    icon: const Icon(Icons.settings_outlined, color: Colors.grey),
                     onPressed: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
                       );
                     },
                   ),
@@ -91,7 +122,9 @@ class MailDrawer extends StatelessWidget {
                   if (accounts != null && accounts!.isNotEmpty)
                     ExpansionTile(
                       title: Text(
-                        selectedAccount != null ? selectedAccount!['email'] : 'Konto auswählen',
+                        selectedAccount != null
+                            ? selectedAccount!['email']
+                            : 'Konto auswählen',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
