@@ -137,9 +137,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   Future<void> _deleteEmail(int id, int index) async {
     final token = await AuthService().getToken();
-    final deletedEmail = emails[index];
+    final deletedEmail = emails.firstWhere((e) => e['id'] == id, orElse: () => null);
     setState(() {
-      emails.removeAt(index);
+      emails.removeWhere((e) => e['id'] == id);
     });
 
     try {
@@ -170,9 +170,9 @@ class _EmailListScreenState extends State<EmailListScreen> {
 
   Future<void> _archiveEmail(int id, int index) async {
     final token = await AuthService().getToken();
-    final archivedEmail = emails[index];
+    final archivedEmail = emails.firstWhere((e) => e['id'] == id, orElse: () => null);
     setState(() {
-      emails.removeAt(index);
+      emails.removeWhere((e) => e['id'] == id);
     });
 
     try {
@@ -229,6 +229,25 @@ class _EmailListScreenState extends State<EmailListScreen> {
     } catch (e) {
       // ignore
     }
+  }
+
+
+  List<dynamic> get displayedEmails {
+    return emails.where((email) {
+      final sender = (email['sender'] ?? '').toLowerCase();
+      final isNewsletter = sender.contains('newsletter') || 
+                           sender.contains('noreply') || 
+                           sender.contains('no-reply') || 
+                           sender.contains('marketing') || 
+                           sender.contains('info@') ||
+                           sender.contains('news@');
+      
+      if (showRelevant) {
+        return !isNewsletter;
+      } else {
+        return isNewsletter;
+      }
+    }).toList();
   }
 
   @override
@@ -410,7 +429,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
               onRefresh: _refreshEmails,
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : emails.isEmpty
+                  : displayedEmails.isEmpty
                   ? ListView(
                       children: const [
                         SizedBox(height: 200),
@@ -418,7 +437,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
                       ],
                     )
                   : ListView.separated(
-                      itemCount: emails.length + 1, // +1 für den Header
+                      itemCount: displayedEmails.length + 1, // +1 für den Header
                       separatorBuilder: (context, index) => const Divider(
                         height: 1,
                         indent: 72,
@@ -438,7 +457,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
                           );
                         }
 
-                        final email = emails[index - 1];
+                        final email = displayedEmails[index - 1];
                         final isRead = email['isRead'] ?? false;
 
                         return Dismissible(
