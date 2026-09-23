@@ -16,6 +16,7 @@ class EmailListScreen extends StatefulWidget {
 
 class _EmailListScreenState extends State<EmailListScreen> {
   bool showRelevant = true;
+  String currentFilter = 'Alle Nachrichten';
   List<dynamic> emails = [];
   bool isLoading = true;
   String currentFolder = 'inbox';
@@ -242,12 +243,41 @@ class _EmailListScreenState extends State<EmailListScreen> {
                            sender.contains('info@') ||
                            sender.contains('news@');
       
-      if (showRelevant) {
-        return !isNewsletter;
-      } else {
-        return isNewsletter;
+      bool matchesTabs = showRelevant ? !isNewsletter : isNewsletter;
+      if (!matchesTabs) return false;
+
+      if (currentFilter == 'Ungelesen') {
+        final isRead = email['is_read'] == 1 || email['is_read'] == true || email['is_read'] == '1';
+        if (isRead) return false;
+      } else if (currentFilter == 'Mit Dateien') {
+        final hasAttachments = email['attachments'] != null && (email['attachments'] as List).isNotEmpty;
+        if (!hasAttachments) return false;
       }
+      
+      return true;
     }).toList();
+  }
+
+  PopupMenuItem<String> _buildPopupItem(String title, IconData icon, bool isDark) {
+    return PopupMenuItem<String>(
+      value: title,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: isDark ? Colors.white70 : Colors.grey[700], size: 20),
+              const SizedBox(width: 12),
+              Text(title),
+            ],
+          ),
+          if (currentFilter == title)
+            const Icon(Icons.radio_button_checked, color: outlookBlue, size: 20)
+          else
+            Icon(Icons.radio_button_unchecked, color: Colors.grey[400], size: 20),
+        ],
+      ),
+    );
   }
 
   @override
@@ -411,15 +441,36 @@ class _EmailListScreenState extends State<EmailListScreen> {
                   ),
                 ),
                 const Spacer(),
-                GestureDetector(
-                  onTap: () {},
+                PopupMenuButton<String>(
+                  onSelected: (String value) {
+                    setState(() {
+                      currentFilter = value;
+                    });
+                  },
+                  position: PopupMenuPosition.under,
+                  color: isDark ? Colors.grey[850] : Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   child: Row(
                     children: [
-                      Icon(Icons.filter_list, size: 18, color: isDark ? Colors.white : Colors.black87),
+                      Icon(Icons.filter_list, size: 18, color: currentFilter != 'Alle Nachrichten' ? outlookBlue : (isDark ? Colors.white : Colors.black87)),
                       const SizedBox(width: 4),
-                      Text('Filter', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                      Text(
+                        currentFilter == 'Alle Nachrichten' ? 'Filter' : currentFilter,
+                        style: TextStyle(color: currentFilter != 'Alle Nachrichten' ? outlookBlue : (isDark ? Colors.white : Colors.black87), fontWeight: currentFilter != 'Alle Nachrichten' ? FontWeight.bold : FontWeight.normal),
+                      ),
                     ],
                   ),
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    _buildPopupItem('Alle Nachrichten', Icons.mail_outline, isDark),
+                    _buildPopupItem('Ungelesen', Icons.mark_email_unread_outlined, isDark),
+                    _buildPopupItem('Gekennzeichnet', Icons.flag_outlined, isDark),
+                    _buildPopupItem('Angeheftet', Icons.push_pin_outlined, isDark),
+                    _buildPopupItem('Kategorisiert', Icons.label_outline, isDark),
+                    _buildPopupItem('Für mich', Icons.person_outline, isDark),
+                    _buildPopupItem('Mit Dateien', Icons.attach_file, isDark),
+                    _buildPopupItem('Erwähnt mich', Icons.alternate_email, isDark),
+                    _buildPopupItem('Ereignisse', Icons.event_note, isDark),
+                  ],
                 ),
               ],
             ),
