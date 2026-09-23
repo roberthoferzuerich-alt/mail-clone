@@ -66,10 +66,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSAppTransportSecurity</key>
+<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Wir benötigen Zugriff auf den Kalender, um deine lokalen Termine in der App anzuzeigen.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Wir benötigen Zugriff auf Kontakte, um Termin-Einladungen zuzuordnen.</string>
 </dict>
 </plist>

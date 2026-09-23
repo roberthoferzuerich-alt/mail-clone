@@ -1,3 +1,10 @@
+import re
+
+def update_settings():
+    with open('lib/screens/settings_screen.dart', 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    new_settings = """
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_calendar/device_calendar.dart';
@@ -108,3 +115,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+"""
+
+    with open('lib/screens/settings_screen.dart', 'w', encoding='utf-8') as f:
+        f.write(new_settings.strip())
+        
+update_settings()
+print("Updated settings screen")

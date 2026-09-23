@@ -1,3 +1,10 @@
+import re
+
+def update_calendar():
+    with open('lib/screens/calendar_screen.dart', 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    new_calendar = """
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -219,3 +226,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
+"""
+
+    with open('lib/screens/calendar_screen.dart', 'w', encoding='utf-8') as f:
+        f.write(new_calendar.strip())
+        
+update_calendar()
+print("Updated CalendarScreen")
