@@ -238,19 +238,26 @@ class _EmailListScreenState extends State<EmailListScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: CircleAvatar(
-              backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-              child: Icon(
-                Icons.home,
-                color: isDark ? Colors.white : outlookBlue,
-              ),
-            ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+          leading: Builder(
+            builder: (context) {
+              final isGmail = selectedAccount != null && selectedAccount!['email'].toString().toLowerCase().contains('gmail');
+              return IconButton(
+                icon: CircleAvatar(
+                  backgroundColor: selectedAccount == null 
+                      ? (isDark ? Colors.grey[800] : Colors.white) 
+                      : (isGmail ? Colors.red : Colors.blue.shade800),
+                  child: selectedAccount == null 
+                      ? Icon(Icons.home, color: isDark ? Colors.white : outlookBlue)
+                      : Text(
+                          isGmail ? 'G' : selectedAccount!['email'].split('@').last[0].toUpperCase(),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                ),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              );
+            },
           ),
-        ),
-        title: Container(
+          title: Container(
           height: 38,
           decoration: BoxDecoration(
             color: isDark ? Colors.grey[800] : Colors.white.withOpacity(0.2),
