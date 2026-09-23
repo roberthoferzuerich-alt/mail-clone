@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../screens/settings_screen.dart';
+import '../screens/accounts_screen.dart';
 
 class MailDrawer extends StatelessWidget {
   final String currentFolder;
@@ -69,7 +70,7 @@ class MailDrawer extends StatelessWidget {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                        MaterialPageRoute(builder: (context) => const AccountsScreen()),
                       );
                     },
                     child: const CircleAvatar(
