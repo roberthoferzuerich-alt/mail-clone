@@ -35,14 +35,16 @@ class MailDrawer extends StatelessWidget {
               width: 70,
               child: Column(
                 children: [
-                  const SizedBox(height: 40),                  
+                  const SizedBox(height: 40),
                   // Dynamische Accounts aus der Datenbank
                   if (accounts != null)
                     ...accounts!.map((acc) {
-                      final isSelected = selectedAccount != null && selectedAccount!['id'] == acc['id'];
+                      final isSelected =
+                          selectedAccount != null &&
+                          selectedAccount!['id'] == acc['id'];
                       final email = acc['email'].toString().toLowerCase();
                       final isGmail = email.contains('gmail');
-                      
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: GestureDetector(
@@ -54,23 +56,33 @@ class MailDrawer extends StatelessWidget {
                           },
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor: isGmail ? Colors.red : Colors.blue.shade800,
+                            backgroundColor: isGmail
+                                ? Colors.red
+                                : Colors.blue.shade800,
                             child: Text(
-                              isGmail ? 'G' : email.split('@').last[0].toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                              isGmail
+                                  ? 'G'
+                                  : email.split('@').last[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
                             ),
                           ),
                         ),
                       );
                     }).toList(),
-                  
+
                   // Konto hinzufügen
                   GestureDetector(
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const AccountsScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const AccountsScreen(),
+                        ),
                       );
                     },
                     child: const CircleAvatar(
@@ -79,17 +91,22 @@ class MailDrawer extends StatelessWidget {
                       child: Icon(Icons.add, color: Colors.grey),
                     ),
                   ),
-                  
+
                   const Spacer(),
                   const Icon(Icons.help_outline, color: Colors.grey),
                   const SizedBox(height: 16),
                   IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: Colors.grey),
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.grey,
+                    ),
                     onPressed: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -109,7 +126,9 @@ class MailDrawer extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 16, bottom: 16),
                     child: Text(
-                      selectedAccount != null ? selectedAccount!['email'] : 'Posteingang',
+                      selectedAccount != null
+                          ? selectedAccount!['email']
+                          : 'Posteingang',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

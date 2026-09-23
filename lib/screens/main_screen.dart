@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'email_list_screen.dart';
 import 'settings_screen.dart';
 import 'compose_email_screen.dart';
+import 'calendar_screen.dart';
 import '../main.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const EmailListScreen(),
-    const Scaffold(body: Center(child: Text('Kalender'))),
+    const CalendarScreen(),
     const Scaffold(body: Center(child: Text('Apps'))),
   ];
 

@@ -47,3 +47,4 @@ def remove_home_and_dropdown():
 
 remove_home_and_dropdown()
 print("Cleaned up drawer")
+
