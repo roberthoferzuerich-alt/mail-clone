@@ -102,6 +102,7 @@ class MailDrawer extends StatelessWidget {
                         return ListTile(
                           title: Text(acc['email']),
                           onTap: () {
+                            Navigator.pop(context);
                             if (onAccountSelected != null) {
                               onAccountSelected!(acc);
                             }
