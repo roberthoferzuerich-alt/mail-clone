@@ -47,3 +47,4 @@ def fix_html_widget():
         print("Updated HTML Widget")
 
 fix_html_widget()
+

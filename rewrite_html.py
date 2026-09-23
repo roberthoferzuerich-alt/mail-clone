@@ -31,3 +31,4 @@ def rewrite():
                 f.write(content)
             print("Success")
 rewrite()
+

@@ -15,6 +15,7 @@ class EmailListScreen extends StatefulWidget {
 }
 
 class _EmailListScreenState extends State<EmailListScreen> {
+  bool showRelevant = true;
   List<dynamic> emails = [];
   bool isLoading = true;
   String currentFolder = 'inbox';
@@ -342,36 +343,51 @@ class _EmailListScreenState extends State<EmailListScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    setState(() {
+                      showRelevant = true;
+                    });
+                  },
                   child: Column(
                     children: [
                       Text(
                         'Relevant',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : outlookBlue,
+                          fontWeight: showRelevant ? FontWeight.bold : FontWeight.normal,
+                          color: showRelevant ? (isDark ? Colors.white : outlookBlue) : Colors.grey,
                           fontSize: 15,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue),
+                      if (showRelevant)
+                        Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue)
+                      else
+                        const SizedBox(height: 2),
                     ],
                   ),
                 ),
                 const SizedBox(width: 24),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    setState(() {
+                      showRelevant = false;
+                    });
+                  },
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         'Sonstige',
                         style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.grey,
+                          fontWeight: !showRelevant ? FontWeight.bold : FontWeight.normal,
+                          color: !showRelevant ? (isDark ? Colors.white : outlookBlue) : Colors.grey,
                           fontSize: 15,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
+                      if (!showRelevant)
+                        Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue)
+                      else
+                        const SizedBox(height: 2),
                     ],
                   ),
                 ),
