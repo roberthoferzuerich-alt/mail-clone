@@ -334,66 +334,61 @@ class _EmailListScreenState extends State<EmailListScreen> {
         children: [
           // Filter / Tabs Row
           Container(
-            color: topBarColor,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.2))),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[800] : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
+                GestureDetector(
+                  onTap: () {},
+                  child: Column(
+                    children: [
+                      Text(
                         'Relevant',
                         style: TextStyle(
-                          color: isDark ? Colors.white : outlookBlue,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : outlookBlue,
+                          fontSize: 15,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Sonstige',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Container(height: 2, width: 40, color: isDark ? Colors.white : outlookBlue),
+                    ],
+                  ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+                const SizedBox(width: 24),
+                GestureDetector(
+                  onTap: () {},
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Sonstige',
+                        style: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Filter',
-                    style: TextStyle(color: Colors.white),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {},
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_list, size: 18, color: isDark ? Colors.white : Colors.black87),
+                      const SizedBox(width: 4),
+                      Text('Filter', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-
-          // E-Mail Liste
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refreshEmails,
