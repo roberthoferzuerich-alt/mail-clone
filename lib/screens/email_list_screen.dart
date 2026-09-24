@@ -28,7 +28,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
   List<dynamic> accounts = [];
   Map<String, dynamic>? selectedAccount;
 
-  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
+  final String apiUrl = 'https://rhz.internet-box.ch:8444/api';
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'Bypass-Tunnel-Reminder': 'true',
+          
         },
       );
       if (response.statusCode == 200) {
@@ -67,7 +67,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
           '$apiUrl/emails/counts${selectedAccount != null ? '?account_id=${selectedAccount!['id']}' : ''}',
         ),
         headers: {
-          'Bypass-Tunnel-Reminder': 'true',
+          
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
@@ -108,7 +108,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
           '$apiUrl/emails?folder=$currentFolder&search=$searchQuery${selectedAccount != null ? '&account_id=${selectedAccount!['id']}' : ''}',
         ),
         headers: {
-          'Bypass-Tunnel-Reminder': 'true',
+          
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
@@ -156,7 +156,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
             .get(
               Uri.parse(imapUrl),
               headers: {
-                'Bypass-Tunnel-Reminder': 'true',
+                
                 'Authorization': 'Bearer $token',
                 'Accept': 'application/json',
               },
@@ -182,7 +182,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
       final response = await http.delete(
         Uri.parse('$apiUrl/emails/$id'),
         headers: {
-          'Bypass-Tunnel-Reminder': 'true',
+          
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
@@ -221,7 +221,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true',
+          
           'Authorization': 'Bearer $token',
         },
         body: json.encode({'folder': 'archive'}),
@@ -260,7 +260,7 @@ class _EmailListScreenState extends State<EmailListScreen> {
       await http.patch(
         Uri.parse('$apiUrl/emails/$id/read'),
         headers: {
-          'Bypass-Tunnel-Reminder': 'true',
+          
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },

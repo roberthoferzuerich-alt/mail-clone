@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
-  static const String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
+  static const String apiUrl = 'https://rhz.internet-box.ch:8444/api';
   final _storage = const FlutterSecureStorage();
 
   Future<bool> login(String email, String password) async {
@@ -13,7 +13,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Bypass-Tunnel-Reminder': 'true',
+          
         },
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -39,7 +39,7 @@ class AuthService {
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true',
+            
           },
         );
       } catch (e) {

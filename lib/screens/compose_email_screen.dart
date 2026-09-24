@@ -95,10 +95,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen> {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://strong-jeans-shave.loca.lt/api/emails'),
+        Uri.parse('https://rhz.internet-box.ch:8444/api/emails'),
       );
 
-      request.headers['Bypass-Tunnel-Reminder'] = 'true';
+      
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
       request.fields['sender'] = _toController.text;

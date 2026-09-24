@@ -22,7 +22,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
-  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
+  final String apiUrl = 'https://rhz.internet-box.ch:8444/api';
 
   @override
   void initState() {
@@ -69,7 +69,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'Authorization': 'Bearer $token',
-                'Bypass-Tunnel-Reminder': 'true',
+                
               },
               body: jsonEncode(bodyData),
             )
@@ -79,7 +79,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'Authorization': 'Bearer $token',
-                'Bypass-Tunnel-Reminder': 'true',
+                
               },
               body: jsonEncode(bodyData),
             );
@@ -142,7 +142,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'Bypass-Tunnel-Reminder': 'true',
+          
         },
       );
       if (response.statusCode == 200 && mounted) {

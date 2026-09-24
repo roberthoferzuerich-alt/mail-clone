@@ -4,7 +4,7 @@ import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 
 const Color outlookBlue = Color(0xFF0078D4);
-final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
+final String apiUrl = 'https://rhz.internet-box.ch:8444/api';
 
 void main() {
   runApp(const MainApp());

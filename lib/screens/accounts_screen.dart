@@ -14,7 +14,7 @@ class AccountsScreen extends StatefulWidget {
 class _AccountsScreenState extends State<AccountsScreen> {
   List<dynamic> accounts = [];
   bool isLoading = true;
-  final String apiUrl = 'https://strong-jeans-shave.loca.lt/api';
+  final String apiUrl = 'https://rhz.internet-box.ch:8444/api';
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'Bypass-Tunnel-Reminder': 'true',
+          
         },
       );
       if (response.statusCode == 200) {
